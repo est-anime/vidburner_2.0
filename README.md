@@ -23,8 +23,8 @@ VideoBurner is a web application that allows users to upload a video and a subti
 
 1. **Clone the Repository**
    ```sh
-   git clone https://github.com/yourusername/videoburner.git
-   cd videoburner
+   git clone https://github.com/yourusername/videoburner_2.0.git
+   cd videoburner_2.0
    ```
 
 2. **Install Dependencies**
@@ -67,5 +67,3 @@ This project is licensed under the MIT License. See the LICENSE file for details
 For any inquiries or issues, please contact us at example@gmail.com.
 
 ---
-
-Feel free to customize this description further to better match your preferences or add any additional details you find relevant.
