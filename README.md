@@ -1,7 +1,3 @@
-Sure! Here is a comprehensive GitHub description for your video encoding app:
-
----
-
 # VideoBurner - Burn Subtitles into Videos Online
 
 VideoBurner is a web application that allows users to upload a video and a subtitle file, burn the subtitles into the video, and download the processed video. The app supports various subtitle formats (SRT, ASS) and provides different font options for the subtitles. Additionally, users can receive an email with a download link once the video processing is complete.
