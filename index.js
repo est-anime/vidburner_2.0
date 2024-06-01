@@ -44,7 +44,7 @@ app.post('/upload', (req, res) => {
 
   const videoPath = __dirname + '/uploads/video.mp4';
   const subtitlesPath = __dirname + '/uploads/subtitles.srt';
-  const outputPath = __dirname + '/uploads/output.mp4';
+  const outputPath = path.join(__dirname, 'uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
     if (err) {
@@ -79,7 +79,7 @@ app.post('/upload', (req, res) => {
         return res.status(400).send('Selected subtitle format is not supported.');
       }
 
-      const ffmpegCommand = `ffmpeg -i ${videoPath} -vf "subtitles=${subtitlesPath}:force_style='Fontfile=${fullFontPath}'" uploads/${outputFileName}`;
+      const ffmpegCommand = `ffmpeg -i ${videoPath} -vf "subtitles=${subtitlesPath}:force_style='Fontfile=${fullFontPath}'" ${outputPath}`;
 
       const ffmpegProcess = exec(ffmpegCommand);
 
@@ -121,15 +121,17 @@ app.post('/upload', (req, res) => {
           secure: false, // Set to true if using port 465 (secure)
           auth: {
             user: 'vpsest@gmail.com',
-            pass: process.env.APP_KEY, // Remove the quotes around process.env.APP_KEY
+            pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
           },
         });
+
+        const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
 
         const mailOptions = {
           from: 'vpsest@gmail.com',
           to: userEmail,
           subject: 'Video Encoding Completed',
-          text: `Your video has been successfully encoded. You can download it using the following link: http://:vidburner.vpsest.repl.co/uploads/${outputFileName}`,
+          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
@@ -139,6 +141,9 @@ app.post('/upload', (req, res) => {
             console.log(`Email sent: ${info.response}`);
           }
         });
+
+        // Send the download link to the client
+        res.send(downloadLink);
       });
     });
   });
