@@ -31,7 +31,7 @@ function checkAuth(req, res, next) {
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', checkAuth, (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+  res.sendFile(__dirname + '/index.html');
 });
 
 app.get('/services', checkAuth, (req, res) => {
@@ -44,7 +44,7 @@ app.get('/contact', checkAuth, (req, res) => {
 
 // Serve the login page
 app.get('/login', (req, res) => {
-  res.sendFile(__dirname + '/public/login.html');
+  res.sendFile(__dirname + '/login.html');
 });
 
 // Handle login form submission
@@ -58,7 +58,7 @@ app.post('/login', (req, res) => {
 
 // Serve the signup page
 app.get('/signup', (req, res) => {
-  res.sendFile(__dirname + '/public/signup.html');
+  res.sendFile(__dirname + '/signup.html');
 });
 
 // Handle signup form submission
