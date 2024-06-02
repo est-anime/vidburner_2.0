@@ -4,77 +4,86 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
-const path = require('path');
-const bodyParser = require('body-parser');
+const path = require('path'); // Import the path module
 const session = require('express-session');
+const bodyParser = require('body-parser');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({
   secret: 'your_secret_key',
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false }
+  saveUninitialized: true
 }));
 
-// In-memory user storage
-const users = {};
-
-// Static file serving
-app.use('/uploads', express.static(__dirname + '/uploads'));
-app.use(express.static(__dirname + '/public'));
-
-// Serve the HTML pages
-app.get('/', (req, res) => {
+// Middleware to check if the user is logged in
+function checkAuth(req, res, next) {
   if (!req.session.user) {
     return res.redirect('/login');
   }
-  res.sendFile(__dirname + '/index.html');
+  next();
+}
+
+// Serve static files from the "public" directory
+app.use(express.static(__dirname + '/public'));
+
+app.get('/', checkAuth, (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
 });
 
+app.get('/services', checkAuth, (req, res) => {
+  res.sendFile(__dirname + '/public/services.html');
+});
+
+app.get('/contact', checkAuth, (req, res) => {
+  res.sendFile(__dirname + '/public/contact.html');
+});
+
+// Serve the login page
 app.get('/login', (req, res) => {
-  res.sendFile(__dirname + '/login.html');
+  res.sendFile(__dirname + '/public/login.html');
 });
 
+// Handle login form submission
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  // Implement your authentication logic here
+  // For simplicity, we'll assume any email/password combination is valid
+  req.session.user = { email };
+  res.redirect('/');
+});
+
+// Serve the signup page
 app.get('/signup', (req, res) => {
-  res.sendFile(__dirname + '/signup.html');
+  res.sendFile(__dirname + '/public/signup.html');
 });
 
+// Handle signup form submission
+app.post('/signup', (req, res) => {
+  const { email, password } = req.body;
+  // Implement your signup logic here
+  // For simplicity, we'll assume signup is always successful
+  res.redirect('/login');
+});
+
+// Handle logout
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/login');
+});
+
+// Endpoint to get user info
 app.get('/user-info', (req, res) => {
   if (!req.session.user) {
-    return res.status(403).json({ error: 'Unauthorized' });
+    return res.status(401).send('Not logged in');
   }
-  const user = users[req.session.user];
-  res.json({ email: user.email });
-});
-
-app.post('/signup', (req, res) => {
-  const { username, password, email } = req.body;
-  if (users[username]) {
-    return res.status(400).send('User already exists');
-  }
-  users[username] = { password, email };
-  res.status(200).send('User registered');
-});
-
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const user = users[username];
-  if (!user || user.password !== password) {
-    return res.status(400).send('Invalid credentials');
-  }
-  req.session.user = username;
-  res.status(200).send('Login successful');
+  res.json(req.session.user);
 });
 
 app.post('/upload', (req, res) => {
-  if (!req.session.user) {
-    return res.status(403).send('Unauthorized');
-  }
-
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
@@ -85,8 +94,8 @@ app.post('/upload', (req, res) => {
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
 
-  const videoPath = path.join(__dirname, 'uploads', 'video.mp4');
-  const subtitlesPath = path.join(__dirname, 'uploads', 'subtitles.srt');
+  const videoPath = __dirname + '/uploads/video.mp4';
+  const subtitlesPath = __dirname + '/uploads/subtitles.srt';
   const outputPath = path.join(__dirname, 'uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
@@ -108,11 +117,13 @@ app.post('/upload', (req, res) => {
       };
 
       const selectedFontFile = fontMapping[selectedFont];
+
       if (!selectedFontFile) {
         return res.status(400).send('Selected font is not supported.');
       }
 
       const fullFontPath = `fonts/${selectedFontFile}`;
+
       const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
       const acceptedSubtitleFormats = ['.srt', '.ass'];
 
@@ -121,6 +132,7 @@ app.post('/upload', (req, res) => {
       }
 
       const ffmpegCommand = `ffmpeg -i ${videoPath} -vf "subtitles=${subtitlesPath}:force_style='Fontfile=${fullFontPath}'" ${outputPath}`;
+
       const ffmpegProcess = exec(ffmpegCommand);
 
       let totalFrames = 0;
@@ -147,43 +159,43 @@ app.post('/upload', (req, res) => {
 
       ffmpegProcess.on('error', (error) => {
         console.error(`Error: ${error.message}`);
-        return res.status(500).send('Error occurred during video processing.');
+        res.status(500).send('Error occurred during video processing.');
       });
 
       ffmpegProcess.on('exit', () => {
-        res.write('data: 100\n\n');
-        res.end();
+        if (!res.headersSent) {
+          // Construct the download link
+          const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
 
-        // Construct the download link
-        const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
+          // Send an email with the download link
+          const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false, // Set to true if using port 465 (secure)
+            auth: {
+              user: 'vpsest@gmail.com',
+              pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
+            },
+          });
 
-        // Send an email with the download link
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false,
-          auth: {
-            user: 'vpsest@gmail.com',
-            pass: process.env.APP_KEY,
-          },
-        });
+          const mailOptions = {
+            from: 'vpsest@gmail.com',
+            to: userEmail,
+            subject: 'Video Encoding Completed',
+            text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+          };
 
-        const mailOptions = {
-          from: 'vpsest@gmail.com',
-          to: userEmail,
-          subject: 'Video Encoding Completed',
-          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
-        };
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              console.error(`Email sending error: ${error}`);
+            } else {
+              console.log(`Email sent: ${info.response}`);
+            }
+          });
 
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error(`Email sending error: ${error}`);
-          } else {
-            console.log(`Email sent: ${info.response}`);
-          }
-        });
-
-        res.send(downloadLink);
+          // Send the download link to the client
+          res.send(downloadLink);
+        }
       });
     });
   });
