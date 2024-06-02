@@ -18,8 +18,20 @@ app.use(fileUpload());
 // Serve static files from the "uploads" directory
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
+
 // Serve static files from the "public" directory
 app.use(express.static(__dirname + '/public'));
+
+app.get('/services', (req, res) => {
+  res.sendFile(__dirname + '/public/services.html');
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(__dirname + '/public/contact.html');
+});
 
 // Create a queue to process video encoding tasks
 const videoQueue = async.queue((task, callback) => {
