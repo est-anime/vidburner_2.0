@@ -5,82 +5,30 @@ const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path'); // Import the path module
-const session = require('express-session');
-const bodyParser = require('body-parser');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(session({
-  secret: 'your_secret_key',
-  resave: false,
-  saveUninitialized: true
-}));
 
-// Middleware to check if the user is logged in
-function checkAuth(req, res, next) {
-  if (!req.session.user) {
-    return res.redirect('/login');
-  }
-  next();
-}
+app.use('/uploads', express.static(__dirname + '/uploads'));
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
 
 // Serve static files from the "public" directory
 app.use(express.static(__dirname + '/public'));
 
-app.get('/', checkAuth, (req, res) => {
+app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
-
-app.get('/services', checkAuth, (req, res) => {
+app.get('/services', (req, res) => {
   res.sendFile(__dirname + '/public/services.html');
 });
 
-app.get('/contact', checkAuth, (req, res) => {
+app.get('/contact', (req, res) => {
   res.sendFile(__dirname + '/public/contact.html');
-});
-
-// Serve the login page
-app.get('/login', (req, res) => {
-  res.sendFile(__dirname + '/public/login.html');
-});
-
-// Handle login form submission
-app.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  // Implement your authentication logic here
-  // For simplicity, we'll assume any email/password combination is valid
-  req.session.user = { email };
-  res.redirect('/');
-});
-
-// Serve the signup page
-app.get('/signup', (req, res) => {
-  res.sendFile(__dirname + '/public/signup.html');
-});
-
-// Handle signup form submission
-app.post('/signup', (req, res) => {
-  const { email, password } = req.body;
-  // Implement your signup logic here
-  // For simplicity, we'll assume signup is always successful
-  res.redirect('/login');
-});
-
-// Handle logout
-app.get('/logout', (req, res) => {
-  req.session.destroy();
-  res.redirect('/login');
-});
-
-// Endpoint to get user info
-app.get('/user-info', (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).send('Not logged in');
-  }
-  res.json(req.session.user);
 });
 
 app.post('/upload', (req, res) => {
@@ -159,43 +107,44 @@ app.post('/upload', (req, res) => {
 
       ffmpegProcess.on('error', (error) => {
         console.error(`Error: ${error.message}`);
-        res.status(500).send('Error occurred during video processing.');
+        return res.status(500).send('Error occurred during video processing.');
       });
 
       ffmpegProcess.on('exit', () => {
-        if (!res.headersSent) {
-          // Construct the download link
-          const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
+        res.write('data: 100\n\n');
+        res.end();
 
-          // Send an email with the download link
-          const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // Set to true if using port 465 (secure)
-            auth: {
-              user: 'vpsest@gmail.com',
-              pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
-            },
-          });
+        // Construct the download link
+        const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
 
-          const mailOptions = {
-            from: 'vpsest@gmail.com',
-            to: userEmail,
-            subject: 'Video Encoding Completed',
-            text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
-          };
+        // Send an email with the download link
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false, // Set to true if using port 465 (secure)
+          auth: {
+            user: 'vpsest@gmail.com',
+            pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
+          },
+        });
 
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              console.error(`Email sending error: ${error}`);
-            } else {
-              console.log(`Email sent: ${info.response}`);
-            }
-          });
+        const mailOptions = {
+          from: 'vpsest@gmail.com',
+          to: userEmail,
+          subject: 'Video Encoding Completed',
+          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+        };
 
-          // Send the download link to the client
-          res.send(downloadLink);
-        }
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error(`Email sending error: ${error}`);
+          } else {
+            console.log(`Email sent: ${info.response}`);
+          }
+        });
+
+        // Send the download link to the client
+        res.send(downloadLink);
       });
     });
   });
