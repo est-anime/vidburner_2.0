@@ -4,7 +4,8 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
-const path = require('path'); // Import the path module
+const path = require('path');
+const async = require('async');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,12 +18,8 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Serve static files from the "public" directory
 app.use(express.static(__dirname + '/public'));
 
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
 app.get('/services', (req, res) => {
   res.sendFile(__dirname + '/public/services.html');
 });
@@ -31,16 +28,13 @@ app.get('/contact', (req, res) => {
   res.sendFile(__dirname + '/public/contact.html');
 });
 
-app.post('/upload', (req, res) => {
-  if (!req.files || !req.files.video || !req.files.subtitles) {
-    return res.status(400).send('Please upload both video and subtitles.');
-  }
+// Create a queue to process video encoding tasks
+const videoQueue = async.queue((task, callback) => {
+  processVideo(task, callback);
+}, 1); // Concurrency of 1 ensures tasks are processed sequentially
 
-  const videoFile = req.files.video;
-  const subtitlesFile = req.files.subtitles;
-  const selectedFont = req.body.font || 'Arial-Bold';
-  const outputFileName = req.body.outputFileName || 'output.mp4';
-  const userEmail = req.body.email;
+function processVideo(task, callback) {
+  const { videoFile, subtitlesFile, selectedFont, outputFileName, userEmail } = task;
 
   const videoPath = __dirname + '/uploads/video.mp4';
   const subtitlesPath = __dirname + '/uploads/subtitles.srt';
@@ -49,13 +43,13 @@ app.post('/upload', (req, res) => {
   videoFile.mv(videoPath, (err) => {
     if (err) {
       console.error(`Error: ${err.message}`);
-      return res.status(500).send('Error occurred while uploading the video.');
+      return callback(err);
     }
 
     subtitlesFile.mv(subtitlesPath, (err) => {
       if (err) {
         console.error(`Error: ${err.message}`);
-        return res.status(500).send('Error occurred while uploading the subtitles.');
+        return callback(err);
       }
 
       const fontMapping = {
@@ -67,7 +61,7 @@ app.post('/upload', (req, res) => {
       const selectedFontFile = fontMapping[selectedFont];
 
       if (!selectedFontFile) {
-        return res.status(400).send('Selected font is not supported.');
+        return callback(new Error('Selected font is not supported.'));
       }
 
       const fullFontPath = `fonts/${selectedFontFile}`;
@@ -76,7 +70,7 @@ app.post('/upload', (req, res) => {
       const acceptedSubtitleFormats = ['.srt', '.ass'];
 
       if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-        return res.status(400).send('Selected subtitle format is not supported.');
+        return callback(new Error('Selected subtitle format is not supported.'));
       }
 
       const ffmpegCommand = `ffmpeg -i ${videoPath} -vf "subtitles=${subtitlesPath}:force_style='Fontfile=${fullFontPath}'" ${outputPath}`;
@@ -101,18 +95,17 @@ app.post('/upload', (req, res) => {
           }
           if (totalFrames > 0 && processedFrames > 0) {
             const progressPercent = (processedFrames / totalFrames) * 100;
-            res.write(`data: ${progressPercent}\n\n`);
+            console.log(`Processing progress: ${progressPercent.toFixed(2)}%`);
           }
         });
 
       ffmpegProcess.on('error', (error) => {
         console.error(`Error: ${error.message}`);
-        return res.status(500).send('Error occurred during video processing.');
+        return callback(error);
       });
 
       ffmpegProcess.on('exit', () => {
-        res.write('data: 100\n\n');
-        res.end();
+        console.log('Video processing completed');
 
         // Construct the download link
         const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
@@ -121,10 +114,10 @@ app.post('/upload', (req, res) => {
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false, // Set to true if using port 465 (secure)
+          secure: false,
           auth: {
             user: 'vpsest@gmail.com',
-            pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
+            pass: process.env.APP_KEY,
           },
         });
 
@@ -143,9 +136,6 @@ app.post('/upload', (req, res) => {
           }
         });
 
-        // Send the download link to the client
-        res.send(downloadLink);
-
         // Delete the processed video after 24 hours
         setTimeout(() => {
           fs.unlink(outputPath, (err) => {
@@ -156,8 +146,38 @@ app.post('/upload', (req, res) => {
             }
           });
         }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+        // Send the download link to the client
+        callback();
       });
     });
+  });
+}
+
+app.post('/upload', (req, res) => {
+  if (!req.files || !req.files.video || !req.files.subtitles) {
+    return res.status(400).send('Please upload both video and subtitles.');
+  }
+
+  const videoFile = req.files.video;
+  const subtitlesFile = req.files.subtitles;
+  const selectedFont = req.body.font || 'Arial-Bold';
+  const outputFileName = req.body.outputFileName || 'output.mp4';
+  const userEmail = req.body.email;
+
+  videoQueue.push({
+    videoFile,
+    subtitlesFile,
+    selectedFont,
+    outputFileName,
+    userEmail
+  }, (err) => {
+    if (err) {
+      console.error('Error processing video:', err);
+      return res.status(500).send('Error occurred during video processing.');
+    }
+    console.log('Video processing completed successfully');
+    res.status(200).send('Video processing completed successfully');
   });
 });
 
