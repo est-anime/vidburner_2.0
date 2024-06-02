@@ -76,6 +76,14 @@
       background-color: #4caf50;
     }
 
+    /* User email styles */
+    .user-email {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 16px;
+    }
+
     /* Responsive styles */
     @media only screen and (max-width: 600px) {
       .container {
@@ -94,6 +102,7 @@
 </head>
 <body>
   <div class="container">
+    <div class="user-email" id="userEmail"></div>
     <h1>Upload Video and Subtitles</h1>
     <form id="uploadForm" enctype="multipart/form-data">
 
@@ -132,6 +141,15 @@
       const progressBar = document.getElementById('progressBar');
       const downloadSection = document.getElementById('downloadSection');
       const downloadButton = document.getElementById('downloadButton');
+      const userEmailDiv = document.getElementById('userEmail');
+
+      document.addEventListener('DOMContentLoaded', () => {
+        fetch('/user-info')
+          .then(response => response.json())
+          .then(data => {
+            userEmailDiv.textContent = `Logged in as: ${data.email}`;
+          });
+      });
 
       form.addEventListener('submit', (e) => {
         e.preventDefault();
