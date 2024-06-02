@@ -111,43 +111,51 @@ app.post('/upload', (req, res) => {
       });
 
       ffmpegProcess.on('exit', () => {
-        res.write('data: 100\n\n');
-        res.end();
+  res.write('data: 100\n\n');
+  res.end();
 
-        // Construct the download link
-        const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
+  // Construct the download link
+  const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
 
-        // Send an email with the download link
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false, // Set to true if using port 465 (secure)
-          auth: {
-            user: 'vpsest@gmail.com',
-            pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
-          },
-        });
-
-        const mailOptions = {
-          from: 'vpsest@gmail.com',
-          to: userEmail,
-          subject: 'Video Encoding Completed',
-          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error(`Email sending error: ${error}`);
-          } else {
-            console.log(`Email sent: ${info.response}`);
-          }
-        });
-
-        // Send the download link to the client
-        res.send(downloadLink);
-      });
-    });
+  // Send an email with the download link
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // Set to true if using port 465 (secure)
+    auth: {
+      user: 'vpsest@gmail.com',
+      pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
+    },
   });
+
+  const mailOptions = {
+    from: 'vpsest@gmail.com',
+    to: userEmail,
+    subject: 'Video Encoding Completed',
+    text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error(`Email sending error: ${error}`);
+    } else {
+      console.log(`Email sent: ${info.response}`);
+    }
+  });
+
+  // Send the download link to the client
+  res.send(downloadLink);
+
+  // Delete the processed video after 24 hours
+  setTimeout(() => {
+    fs.unlink(outputPath, (err) => {
+      if (err) {
+        console.error(`Error deleting file: ${err}`);
+      } else {
+        console.log('Processed video deleted successfully after 24 hours.');
+      }
+    });
+  }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
 });
 
 app.listen(port, '0.0.0.0', () => {
