@@ -14,7 +14,9 @@ app.use(fileUpload());
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
-app.use(express.static(__dirname + '/public'));
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
 
 const videoQueue = async.queue((task, callback) => {
   processVideo(task, callback);
