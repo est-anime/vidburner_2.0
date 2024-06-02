@@ -4,8 +4,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
-const path = require('path');
-const async = require('async');
+const path = require('path'); // Import the path module
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,12 +17,30 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-const videoQueue = async.queue((task, callback) => {
-  processVideo(task, callback);
-}, 1);
+// Serve static files from the "public" directory
+app.use(express.static(__dirname + '/public'));
 
-function processVideo(task, callback) {
-  const { videoFile, subtitlesFile, selectedFont, outputFileName, userEmail } = task;
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+app.get('/services', (req, res) => {
+  res.sendFile(__dirname + '/public/services.html');
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(__dirname + '/public/contact.html');
+});
+
+app.post('/upload', (req, res) => {
+  if (!req.files || !req.files.video || !req.files.subtitles) {
+    return res.status(400).send('Please upload both video and subtitles.');
+  }
+
+  const videoFile = req.files.video;
+  const subtitlesFile = req.files.subtitles;
+  const selectedFont = req.body.font || 'Arial-Bold';
+  const outputFileName = req.body.outputFileName || 'output.mp4';
+  const userEmail = req.body.email;
 
   const videoPath = __dirname + '/uploads/video.mp4';
   const subtitlesPath = __dirname + '/uploads/subtitles.srt';
@@ -32,13 +49,13 @@ function processVideo(task, callback) {
   videoFile.mv(videoPath, (err) => {
     if (err) {
       console.error(`Error: ${err.message}`);
-      return callback(err);
+      return res.status(500).send('Error occurred while uploading the video.');
     }
 
     subtitlesFile.mv(subtitlesPath, (err) => {
       if (err) {
         console.error(`Error: ${err.message}`);
-        return callback(err);
+        return res.status(500).send('Error occurred while uploading the subtitles.');
       }
 
       const fontMapping = {
@@ -50,7 +67,7 @@ function processVideo(task, callback) {
       const selectedFontFile = fontMapping[selectedFont];
 
       if (!selectedFontFile) {
-        return callback(new Error('Selected font is not supported.'));
+        return res.status(400).send('Selected font is not supported.');
       }
 
       const fullFontPath = `fonts/${selectedFontFile}`;
@@ -59,7 +76,7 @@ function processVideo(task, callback) {
       const acceptedSubtitleFormats = ['.srt', '.ass'];
 
       if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-        return callback(new Error('Selected subtitle format is not supported.'));
+        return res.status(400).send('Selected subtitle format is not supported.');
       }
 
       const ffmpegCommand = `ffmpeg -i ${videoPath} -vf "subtitles=${subtitlesPath}:force_style='Fontfile=${fullFontPath}'" ${outputPath}`;
@@ -84,27 +101,30 @@ function processVideo(task, callback) {
           }
           if (totalFrames > 0 && processedFrames > 0) {
             const progressPercent = (processedFrames / totalFrames) * 100;
-            console.log(`Processing progress: ${progressPercent.toFixed(2)}%`);
+            res.write(`data: ${progressPercent}\n\n`);
           }
         });
 
       ffmpegProcess.on('error', (error) => {
         console.error(`Error: ${error.message}`);
-        return callback(error);
+        return res.status(500).send('Error occurred during video processing.');
       });
 
       ffmpegProcess.on('exit', () => {
-        console.log('Video processing completed');
+        res.write('data: 100\n\n');
+        res.end();
 
+        // Construct the download link
         const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
 
+        // Send an email with the download link
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false,
+          secure: false, // Set to true if using port 465 (secure)
           auth: {
             user: 'vpsest@gmail.com',
-            pass: 'pscbvagwbgjvwaxd',
+            pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
           },
         });
 
@@ -123,6 +143,10 @@ function processVideo(task, callback) {
           }
         });
 
+        // Send the download link to the client
+        res.send(downloadLink);
+
+        // Delete the processed video after 24 hours
         setTimeout(() => {
           fs.unlink(outputPath, (err) => {
             if (err) {
@@ -131,45 +155,12 @@ function processVideo(task, callback) {
               console.log('Processed video deleted successfully after 24 hours.');
             }
           });
-        }, 24 * 60 * 60 * 1000);
-
-        callback(null); // Remove the task from the queue
+        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
       });
     });
   });
-}
-
-app.post('/upload', (req, res) => {
-  if (!req.files || !req.files.video || !req.files.subtitles) {
-    return res.status(400).send('Please upload both video and subtitles.');
-  }
-
-  const videoFile = req.files.video;
-  const subtitlesFile = req.files.subtitles;
-  const selectedFont = req.body.font || 'Arial-Bold';
-  const outputFileName = req.body.outputFileName || 'output.mp4';
-  const userEmail = req.body.email;
-
-  videoQueue.push({
-    videoFile,
-    subtitlesFile,
-    selectedFont,
-    outputFileName,
-    userEmail
-  }, (err) => {
-    if (err) {
-      console.error('Error processing video:', err);
-      return res.status(500).send('Error occurred during video processing.');
-    }
-    console.log('Video processing completed successfully');
-    res.status(200).send('Video processing completed successfully');
-  });
 });
 
-app.get('/queueNumber', (req, res) => {
-  res.status(200).send(String(videoQueue.length()));
-});
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${port}`);
 });
