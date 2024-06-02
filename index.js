@@ -4,34 +4,77 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
-const path = require('path'); // Import the path module
+const path = require('path');
+const bodyParser = require('body-parser');
+const session = require('express-session');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
+app.use(bodyParser.json());
+app.use(session({
+  secret: 'your_secret_key',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}));
 
+// In-memory user storage
+const users = {};
+
+// Static file serving
 app.use('/uploads', express.static(__dirname + '/uploads'));
+app.use(express.static(__dirname + '/public'));
 
+// Serve the HTML pages
 app.get('/', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
   res.sendFile(__dirname + '/index.html');
 });
 
-// Serve static files from the "public" directory
-app.use(express.static(__dirname + '/public'));
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
-app.get('/services', (req, res) => {
-  res.sendFile(__dirname + '/public/services.html');
+app.get('/login', (req, res) => {
+  res.sendFile(__dirname + '/login.html');
 });
 
-app.get('/contact', (req, res) => {
-  res.sendFile(__dirname + '/public/contact.html');
+app.get('/signup', (req, res) => {
+  res.sendFile(__dirname + '/signup.html');
+});
+
+app.get('/user-info', (req, res) => {
+  if (!req.session.user) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  const user = users[req.session.user];
+  res.json({ email: user.email });
+});
+
+app.post('/signup', (req, res) => {
+  const { username, password, email } = req.body;
+  if (users[username]) {
+    return res.status(400).send('User already exists');
+  }
+  users[username] = { password, email };
+  res.status(200).send('User registered');
+});
+
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  const user = users[username];
+  if (!user || user.password !== password) {
+    return res.status(400).send('Invalid credentials');
+  }
+  req.session.user = username;
+  res.status(200).send('Login successful');
 });
 
 app.post('/upload', (req, res) => {
+  if (!req.session.user) {
+    return res.status(403).send('Unauthorized');
+  }
+
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
@@ -42,8 +85,8 @@ app.post('/upload', (req, res) => {
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
 
-  const videoPath = __dirname + '/uploads/video.mp4';
-  const subtitlesPath = __dirname + '/uploads/subtitles.srt';
+  const videoPath = path.join(__dirname, 'uploads', 'video.mp4');
+  const subtitlesPath = path.join(__dirname, 'uploads', 'subtitles.srt');
   const outputPath = path.join(__dirname, 'uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
@@ -65,13 +108,11 @@ app.post('/upload', (req, res) => {
       };
 
       const selectedFontFile = fontMapping[selectedFont];
-
       if (!selectedFontFile) {
         return res.status(400).send('Selected font is not supported.');
       }
 
       const fullFontPath = `fonts/${selectedFontFile}`;
-
       const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
       const acceptedSubtitleFormats = ['.srt', '.ass'];
 
@@ -80,7 +121,6 @@ app.post('/upload', (req, res) => {
       }
 
       const ffmpegCommand = `ffmpeg -i ${videoPath} -vf "subtitles=${subtitlesPath}:force_style='Fontfile=${fullFontPath}'" ${outputPath}`;
-
       const ffmpegProcess = exec(ffmpegCommand);
 
       let totalFrames = 0;
@@ -121,10 +161,10 @@ app.post('/upload', (req, res) => {
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false, // Set to true if using port 465 (secure)
+          secure: false,
           auth: {
             user: 'vpsest@gmail.com',
-            pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
+            pass: process.env.APP_KEY,
           },
         });
 
@@ -143,7 +183,6 @@ app.post('/upload', (req, res) => {
           }
         });
 
-        // Send the download link to the client
         res.send(downloadLink);
       });
     });
