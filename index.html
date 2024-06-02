@@ -76,6 +76,12 @@
       background-color: #4caf50;
     }
 
+    /* Queue number styles */
+    #queueNumber {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
     /* Responsive styles */
     @media only screen and (max-width: 600px) {
       .container {
@@ -122,6 +128,8 @@
 
     <progress id="progressBar" value="0" max="100"></progress>
 
+    <div id="queueNumber"></div>
+
     <div id="downloadSection">
       <h2>Video Encoding Successful!</h2>
       <button id="downloadButton">Download Processed Video If link is not working then check your mail</button>
@@ -130,6 +138,7 @@
     <script>
       const form = document.getElementById('uploadForm');
       const progressBar = document.getElementById('progressBar');
+      const queueNumber = document.getElementById('queueNumber');
       const downloadSection = document.getElementById('downloadSection');
       const downloadButton = document.getElementById('downloadButton');
 
@@ -161,6 +170,23 @@
 
         xhr.send(formData);
       });
+
+      // Fetch queue number from server
+      function fetchQueueNumber() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/queueNumber');
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+            const number = xhr.responseText;
+            queueNumber.textContent = `Queue Number: ${number}`;
+          }
+        };
+        xhr.send();
+      }
+
+      // Fetch queue number initially and update every 5 seconds
+      fetchQueueNumber();
+      setInterval(fetchQueueNumber, 5000);
     </script>
   </div>
 </body>
