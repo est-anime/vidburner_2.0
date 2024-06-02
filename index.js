@@ -1,3 +1,4 @@
+// Import necessary modules
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const { exec } = require('child_process');
@@ -7,32 +8,25 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const async = require('async');
 
+// Initialize Express app and port
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Use file upload middleware
 app.use(fileUpload());
 
+// Serve static files from the "uploads" directory
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
-});
-
+// Serve static files from the "public" directory
 app.use(express.static(__dirname + '/public'));
-
-app.get('/services', (req, res) => {
-  res.sendFile(__dirname + '/public/services.html');
-});
-
-app.get('/contact', (req, res) => {
-  res.sendFile(__dirname + '/public/contact.html');
-});
 
 // Create a queue to process video encoding tasks
 const videoQueue = async.queue((task, callback) => {
   processVideo(task, callback);
 }, 1); // Concurrency of 1 ensures tasks are processed sequentially
 
+// Function to process video tasks
 function processVideo(task, callback) {
   const { videoFile, subtitlesFile, selectedFont, outputFileName, userEmail } = task;
 
@@ -154,6 +148,7 @@ function processVideo(task, callback) {
   });
 }
 
+// Route to handle video upload
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
@@ -180,6 +175,17 @@ app.post('/upload', (req, res) => {
     res.status(200).send('Video processing completed successfully');
   });
 });
+
+// Route to get the current queue length
+app.get('/queueNumber', (req, res) => {
+  res.status(200).send(String(videoQueue.length()));
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${port}`);
