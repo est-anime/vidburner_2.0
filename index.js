@@ -39,12 +39,14 @@ app.use(
   })
 );
 
-// Serve static files from the "public" directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Routes
+app.use(fileUpload());
+
+app.use('/uploads', express.static(__dirname + '/uploads'));
+
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
+});
 
 app.get('/signup', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
