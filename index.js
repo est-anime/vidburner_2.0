@@ -23,13 +23,19 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/signup', (req, res) => {
+  res.sendFile(__dirname + '/signup.html');
+});
+
+app.get('/signup', (req, res) => {
+  res.sendFile(__dirname + '/signup.html');
+});
+
 // Authentication routes
-app.get('/login', (req, res) => {
-  res.sendFile(__dirname + '/login.html');
+app.post('/login', (req, res) => {
 });
 
 app.post('/signup', (req, res) => {
-  res.sendFile(__dirname + '/signup.html');
 });
 
 // Your existing routes
