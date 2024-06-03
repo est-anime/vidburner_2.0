@@ -4,31 +4,90 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
-const path = require('path'); // Import the path module
+const path = require('path');
+const mongoose = require('mongoose');
+const session = require('express-session');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(fileUpload());
-
-app.use('/uploads', express.static(__dirname + '/uploads'));
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/videoburner', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 });
+
+const userSchema = new mongoose.Schema({
+  username: { type: String, unique: true, required: true },
+  email: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+});
+
+const User = mongoose.model('User', userSchema);
+
+// Middleware
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(fileUpload());
+app.use(
+  session({
+    secret: 'your_secret_key',
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 
 // Serve static files from the "public" directory
-app.use(express.static(__dirname + '/public'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Routes
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
-app.get('/services', (req, res) => {
-  res.sendFile(__dirname + '/public/services.html');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/contact', (req, res) => {
-  res.sendFile(__dirname + '/public/contact.html');
+app.get('/signup', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'signup.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+  if (req.session.user) {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+  } else {
+    res.redirect('/login');
+  }
+});
+
+app.post('/signup', async (req, res) => {
+  const { username, email, password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ username, email, password: hashedPassword });
+    await user.save();
+    res.redirect('/login');
+  } catch (error) {
+    res.status(400).send('Error signing up, user might already exist.');
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (user && (await bcrypt.compare(password, user.password))) {
+      req.session.user = user;
+      res.redirect('/dashboard');
+    } else {
+      res.status(400).send('Invalid email or password');
+    }
+  } catch (error) {
+    res.status(400).send('Error logging in');
+  }
 });
 
 app.post('/upload', (req, res) => {
@@ -42,8 +101,8 @@ app.post('/upload', (req, res) => {
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
 
-  const videoPath = __dirname + '/uploads/video.mp4';
-  const subtitlesPath = __dirname + '/uploads/subtitles.srt';
+  const videoPath = path.join(__dirname, 'uploads', 'video.mp4');
+  const subtitlesPath = path.join(__dirname, 'uploads', 'subtitles.srt');
   const outputPath = path.join(__dirname, 'uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
@@ -61,7 +120,7 @@ app.post('/upload', (req, res) => {
       const fontMapping = {
         'Arial-Bold': 'Arial-Bold.ttf',
         'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-        'Tungsten-Bold': 'Tungsten-Bold.ttf'
+        'Tungsten-Bold': 'Tungsten-Bold.ttf',
       };
 
       const selectedFontFile = fontMapping[selectedFont];
@@ -85,25 +144,24 @@ app.post('/upload', (req, res) => {
 
       let totalFrames = 0;
       let processedFrames = 0;
-      readline.createInterface({ input: ffmpegProcess.stderr })
-        .on('line', (line) => {
-          if (line.includes('frame=')) {
-            const match = line.match(/frame=\s*(\d+)/);
-            if (match && match[1]) {
-              processedFrames = parseInt(match[1]);
-            }
+      readline.createInterface({ input: ffmpegProcess.stderr }).on('line', (line) => {
+        if (line.includes('frame=')) {
+          const match = line.match(/frame=\s*(\d+)/);
+          if (match && match[1]) {
+            processedFrames = parseInt(match[1]);
           }
-          if (line.includes('fps=')) {
-            const match = line.match(/fps=\s*([\d.]+)/);
-            if (match && match[1]) {
-              totalFrames = parseInt(match[1]);
-            }
+        }
+        if (line.includes('fps=')) {
+          const match = line.match(/fps=\s*([\d.]+)/);
+          if (match && match[1]) {
+            totalFrames = parseInt(match[1]);
           }
-          if (totalFrames > 0 && processedFrames > 0) {
-            const progressPercent = (processedFrames / totalFrames) * 100;
-            res.write(`data: ${progressPercent}\n\n`);
-          }
-        });
+        }
+        if (totalFrames > 0 && processedFrames > 0) {
+          const progressPercent = (processedFrames / totalFrames) * 100;
+          res.write(`data: ${progressPercent}\n\n`);
+        }
+      });
 
       ffmpegProcess.on('error', (error) => {
         console.error(`Error: ${error.message}`);
@@ -121,7 +179,7 @@ app.post('/upload', (req, res) => {
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false, // Set to true if using port 465 (secure)
+          secure: false,
           auth: {
             user: 'vpsest@gmail.com',
             pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
