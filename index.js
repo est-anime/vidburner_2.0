@@ -28,8 +28,8 @@ const User = mongoose.model('User', userSchema);
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded form data
+app.use(express.json()); // Middleware to parse JSON data
 app.use(fileUpload());
 app.use(
   session({
@@ -39,13 +39,12 @@ app.use(
   })
 );
 
+// Serve static files from the "public" directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Routes
-app.use(fileUpload());
-
-app.use('/uploads', express.static(__dirname + '/uploads'));
-
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/signup', (req, res) => {
@@ -221,5 +220,4 @@ app.post('/upload', (req, res) => {
 });
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${port}`);
-});
+  console.log(`Server running on http://0.0.0.0:${port
