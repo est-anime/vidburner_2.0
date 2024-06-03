@@ -28,8 +28,8 @@ const User = mongoose.model('User', userSchema);
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded form data
-app.use(express.json()); // Middleware to parse JSON data
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(fileUpload());
 app.use(
   session({
@@ -44,7 +44,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html')); // Corrected path to index.html
 });
 
 app.get('/signup', (req, res) => {
@@ -179,7 +179,7 @@ app.post('/upload', (req, res) => {
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false,
+          secure: false, // Set to true if using port 465 (secure)
           auth: {
             user: 'vpsest@gmail.com',
             pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
@@ -220,4 +220,5 @@ app.post('/upload', (req, res) => {
 });
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${port
+  console.log(`Server running on http://0.0.0.0:${port}`);
+});
