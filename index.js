@@ -1,3 +1,4 @@
+// Your existing code
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const { exec } = require('child_process');
@@ -73,7 +74,6 @@ app.post('/upload', (req, res) => {
 });
 
 // Function to encode a video
-// Function to encode a video
 function encodeVideo(videoPath, subtitlesPath, selectedFont, outputPath, userEmail) {
   const fontMapping = {
     'Arial-Bold': 'Arial-Bold.ttf',
@@ -101,7 +101,7 @@ function encodeVideo(videoPath, subtitlesPath, selectedFont, outputPath, userEma
 
   ffmpegProcess.on('exit', () => {
     // Send email with download link
-    const downloadLink = `http://${req.hostname}:${port}/uploads/${path.basename(outputPath)}`;
+    const downloadLink = `http://${app.get('host')}:${port}/uploads/${path.basename(outputPath)}`;
     sendEmail(userEmail, downloadLink);
 
     // Delete processed video after 24 hours
@@ -118,6 +118,11 @@ function encodeVideo(videoPath, subtitlesPath, selectedFont, outputPath, userEma
     // Continue with the next encoding request
     processNextEncoding();
   });
+}
+
+// Function to send email
+function sendEmail(email, downloadLink) {
+  // Implement email sending logic using nodemailer
 }
 
 // Your existing routes
