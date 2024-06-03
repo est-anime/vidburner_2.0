@@ -4,25 +4,35 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
-const path = require('path'); // Import the path module
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(fileUpload());
-
-app.use('/uploads', express.static(__dirname + '/uploads'));
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
-});
+app.use(express.json()); // Parse JSON bodies
+app.use(fileUpload()); // File upload middleware
 
 // Serve static files from the "public" directory
 app.use(express.static(__dirname + '/public'));
 
+// Serve static files from the "uploads" directory
+app.use('/uploads', express.static(__dirname + '/uploads'));
+
+// Routes
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+  res.sendFile(__dirname + '/index.html');
 });
+
+// Authentication routes
+app.post('/login', (req, res) => {
+  // Add your login logic here
+});
+
+app.post('/signup', (req, res) => {
+  // Add your signup logic here
+});
+
+// Your existing routes
 app.get('/services', (req, res) => {
   res.sendFile(__dirname + '/public/services.html');
 });
@@ -30,26 +40,6 @@ app.get('/services', (req, res) => {
 app.get('/contact', (req, res) => {
   res.sendFile(__dirname + '/public/contact.html');
 });
-
-/ Signup route
-app.post('/signup', async (req, res) => {
-  // Your signup logic here
-});
-
-// Login route
-app.post('/login', async (req, res) => {
-  // Your login logic here
-});
-
-// Dashboard route (protected)
-app.get('/dashboard', authenticateToken, (req, res) => {
-  // Return the dashboard HTML or redirect to dashboard page
-});
-
-// Authentication middleware
-function authenticateToken(req, res, next) {
-  // Your authentication logic here
-}
 
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
