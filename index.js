@@ -213,7 +213,13 @@ app.post('/upload', (req, res) => {
           responseSent = true;
 
           // Send the download link to the client
-          res.send(downloadLink);
+      const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
+      res.setHeader('Content-Type', 'text/plain');
+      res.write(downloadLink);
+      res.end();
+    });
+  });
+});
 
           // Delete the processed video after 24 hours
           setTimeout(() => {
