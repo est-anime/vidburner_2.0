@@ -12,7 +12,7 @@
       margin: 0;
       padding: 0;
     }
-    
+
     /* Container styles */
     .container {
       max-width: 800px;
@@ -33,7 +33,7 @@
       margin-bottom: 5px;
     }
 
-    select, input[type="text"], input[type="file"] {
+    select, input[type="text"], input[type="file"], input[type="email"] {
       width: 100%;
       padding: 10px;
       font-size: 16px;
@@ -76,6 +76,23 @@
       background-color: #4caf50;
     }
 
+    /* Link section styles */
+    .links {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .links a {
+      color: #007bff;
+      text-decoration: none;
+      margin: 0 10px;
+      font-size: 18px;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+
     /* Responsive styles */
     @media only screen and (max-width: 600px) {
       .container {
@@ -89,6 +106,10 @@
       button {
         font-size: 16px;
       }
+
+      .links a {
+        font-size: 16px;
+      }
     }
   </style>
 </head>
@@ -96,7 +117,6 @@
   <div class="container">
     <h1>Upload Video and Subtitles</h1>
     <form id="uploadForm" enctype="multipart/form-data">
-
       <label for="video">Select video (MP4 or MKV):</label>
       <input type="file" id="video" name="video" accept="video/*" required><br>
 
@@ -113,7 +133,7 @@
       <label for="outputFileName">Output file name:</label>
       <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required><br>
 
-      <label for="email">Enter your email To get Download Link:</label>
+      <label for="email">Enter your email to get the download link:</label>
       <input type="email" id="email" name="email" placeholder="your_email@example.com" required><br>
 
       <h3>Timing takes - <br> 10 min = 13 min takes <br> 15 min = 20 min takes <br> 24 min = 30 min takes</h3>
@@ -126,42 +146,47 @@
       <h2>Video Encoding Successful!</h2>
       <button id="downloadButton">Download Processed Video If link is not working then check your mail</button>
     </div>
-
-    <script>
-      const form = document.getElementById('uploadForm');
-      const progressBar = document.getElementById('progressBar');
-      const downloadSection = document.getElementById('downloadSection');
-      const downloadButton = document.getElementById('downloadButton');
-
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/upload');
-        xhr.upload.addEventListener('progress', (event) => {
-          const percent = (event.loaded / event.total) * 100;
-          progressBar.value = percent;
-        });
-
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-              console.log('Upload completed!');
-              downloadSection.style.display = 'block';
-              const downloadLink = xhr.responseText;
-              downloadButton.addEventListener('click', () => {
-                window.location.href = downloadLink;
-              });
-            } else {
-              console.error('Upload failed!');
-            }
-          }
-        };
-
-        xhr.send(formData);
-      });
-    </script>
   </div>
+
+  <div class="container links">
+    <a href="/signup">Sign Up</a>
+    <a href="/login">Login</a>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const progressBar = document.getElementById('progressBar');
+    const downloadSection = document.getElementById('downloadSection');
+    const downloadButton = document.getElementById('downloadButton');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/upload');
+      xhr.upload.addEventListener('progress', (event) => {
+        const percent = (event.loaded / event.total) * 100;
+        progressBar.value = percent;
+      });
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            console.log('Upload completed!');
+            downloadSection.style.display = 'block';
+            const downloadLink = xhr.responseText;
+            downloadButton.addEventListener('click', () => {
+              window.location.href = downloadLink;
+            });
+          } else {
+            console.error('Upload failed!');
+          }
+        }
+      };
+
+      xhr.send(formData);
+    });
+  </script>
 </body>
 </html>
