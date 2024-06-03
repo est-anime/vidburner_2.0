@@ -119,7 +119,7 @@ app.post('/upload', (req, res) => {
         console.error(`Error: ${err.message}`);
         return res.status(500).send('Error occurred while uploading the subtitles.');
       }
-
+      
       const fontMapping = {
         'Arial-Bold': 'Arial-Bold.ttf',
         'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
