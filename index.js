@@ -44,15 +44,7 @@ app.post('/signup', (req, res) => {
   res.send('Signup route reached');
 });
 
-// Your existing routes
-app.get('/services', (req, res) => {
-  res.sendFile(__dirname + '/public/services.html');
-});
-
-app.get('/contact', (req, res) => {
-  res.sendFile(__dirname + '/public/contact.html');
-});
-
+// Route to handle video upload and encoding request
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
@@ -181,6 +173,15 @@ app.post('/upload', (req, res) => {
       });
     });
   });
+});
+
+// Your existing routes
+app.get('/services', (req, res) => {
+  res.sendFile(__dirname + '/public/services.html');
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(__dirname + '/public/contact.html');
 });
 
 app.listen(port, '0.0.0.0', () => {
