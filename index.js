@@ -31,6 +31,26 @@ app.get('/contact', (req, res) => {
   res.sendFile(__dirname + '/public/contact.html');
 });
 
+/ Signup route
+app.post('/signup', async (req, res) => {
+  // Your signup logic here
+});
+
+// Login route
+app.post('/login', async (req, res) => {
+  // Your login logic here
+});
+
+// Dashboard route (protected)
+app.get('/dashboard', authenticateToken, (req, res) => {
+  // Return the dashboard HTML or redirect to dashboard page
+});
+
+// Authentication middleware
+function authenticateToken(req, res, next) {
+  // Your authentication logic here
+}
+
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
