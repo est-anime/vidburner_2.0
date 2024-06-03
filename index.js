@@ -24,12 +24,12 @@ app.get('/', (req, res) => {
 });
 
 // Authentication routes
-app.post('/login', (req, res) => {
-  // Add your login logic here
+app.get('/login', (req, res) => {
+  res.sendFile(__dirname + '/login.html');
 });
 
 app.post('/signup', (req, res) => {
-  // Add your signup logic here
+  res.sendFile(__dirname + '/signup.html');
 });
 
 // Your existing routes
