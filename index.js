@@ -70,7 +70,11 @@ app.post('/signup', async (req, res) => {
     await user.save();
     res.redirect('/login');
   } catch (error) {
-    res.status(400).send('Error signing up, user might already exist.');
+    if (error.code === 11000) {
+      res.status(400).send('User with this email or username already exists.');
+    } else {
+      res.status(500).send('Error signing up.');
+    }
   }
 });
 
