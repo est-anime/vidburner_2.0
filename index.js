@@ -25,9 +25,15 @@ app.get('/', (req, res) => {
 
 // Authentication routes
 app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  // Perform login authentication here
+  res.send('Login route reached');
 });
 
 app.post('/signup', (req, res) => {
+  const { email, password } = req.body;
+  // Perform signup authentication here
+  res.send('Signup route reached');
 });
 
 // Your existing routes
