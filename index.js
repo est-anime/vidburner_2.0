@@ -4,93 +4,31 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
-const path = require('path');
-const mongoose = require('mongoose');
-const session = require('express-session');
-const bcrypt = require('bcrypt');
+const path = require('path'); // Import the path module
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// MongoDB connection
-mongoose.connect('mongodb://localhost:27017/videoburner', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true, required: true },
-  email: { type: String, unique: true, required: true },
-  password: { type: String, required: true },
-});
-
-const User = mongoose.model('User', userSchema);
-
-// Middleware
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 app.use(fileUpload());
-app.use(
-  session({
-    secret: 'your_secret_key',
-    resave: false,
-    saveUninitialized: true,
-  })
-);
 
-// Serve static files from the "uploads" directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(__dirname + '/uploads'));
 
-// Routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(__dirname + '/index.html');
 });
 
-app.get('/signup', (req, res) => {
-  res.sendFile(path.join(__dirname, 'signup.html'));
+// Serve static files from the "public" directory
+app.use(express.static(__dirname + '/public'));
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+app.get('/services', (req, res) => {
+  res.sendFile(__dirname + '/public/services.html');
 });
 
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-  if (req.session.user) {
-    res.sendFile(path.join(__dirname, 'dashboard.html'));
-  } else {
-    res.redirect('/login');
-  }
-});
-
-app.post('/signup', async (req, res) => {
-  const { username, email, password } = req.body;
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, email, password: hashedPassword });
-    await user.save();
-    res.redirect('/login');
-  } catch (error) {
-    if (error.code === 11000) {
-      res.status(400).send('User with this email or username already exists.');
-    } else {
-      res.status(500).send('Error signing up.');
-    }
-  }
-});
-
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (user && (await bcrypt.compare(password, user.password))) {
-      req.session.user = user;
-      res.redirect('/dashboard');
-    } else {
-      res.status(400).send('Invalid email or password');
-    }
-  } catch (error) {
-    res.status(400).send('Error logging in');
-  }
+app.get('/contact', (req, res) => {
+  res.sendFile(__dirname + '/public/contact.html');
 });
 
 app.post('/upload', (req, res) => {
@@ -104,8 +42,8 @@ app.post('/upload', (req, res) => {
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
 
-  const videoPath = path.join(__dirname, 'uploads', 'video.mp4');
-  const subtitlesPath = path.join(__dirname, 'uploads', 'subtitles.srt');
+  const videoPath = __dirname + '/uploads/video.mp4';
+  const subtitlesPath = __dirname + '/uploads/subtitles.srt';
   const outputPath = path.join(__dirname, 'uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
@@ -119,11 +57,11 @@ app.post('/upload', (req, res) => {
         console.error(`Error: ${err.message}`);
         return res.status(500).send('Error occurred while uploading the subtitles.');
       }
-      
+
       const fontMapping = {
         'Arial-Bold': 'Arial-Bold.ttf',
         'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-        'Tungsten-Bold': 'Tungsten-Bold.ttf',
+        'Tungsten-Bold': 'Tungsten-Bold.ttf'
       };
 
       const selectedFontFile = fontMapping[selectedFont];
@@ -147,91 +85,77 @@ app.post('/upload', (req, res) => {
 
       let totalFrames = 0;
       let processedFrames = 0;
-      let responseSent = false;
-
-      readline.createInterface({ input: ffmpegProcess.stderr }).on('line', (line) => {
-        if (line.includes('frame=')) {
-          const match = line.match(/frame=\s*(\d+)/);
-          if (match && match[1]) {
-            processedFrames = parseInt(match[1]);
+      readline.createInterface({ input: ffmpegProcess.stderr })
+        .on('line', (line) => {
+          if (line.includes('frame=')) {
+            const match = line.match(/frame=\s*(\d+)/);
+            if (match && match[1]) {
+              processedFrames = parseInt(match[1]);
+            }
           }
-        }
-        if (line.includes('fps=')) {
-          const match = line.match(/fps=\s*([\d.]+)/);
-          if (match && match[1]) {
-            totalFrames = parseInt(match[1]);
+          if (line.includes('fps=')) {
+            const match = line.match(/fps=\s*([\d.]+)/);
+            if (match && match[1]) {
+              totalFrames = parseInt(match[1]);
+            }
           }
-        }
-        if (totalFrames > 0 && processedFrames > 0) {
-          const progressPercent = (processedFrames / totalFrames) * 100;
-          res.write(`data: ${progressPercent}\n\n`);
-        }
-      });
+          if (totalFrames > 0 && processedFrames > 0) {
+            const progressPercent = (processedFrames / totalFrames) * 100;
+            res.write(`data: ${progressPercent}\n\n`);
+          }
+        });
 
       ffmpegProcess.on('error', (error) => {
         console.error(`Error: ${error.message}`);
-        if (!responseSent) {
-          res.status(500).send('Error occurred during video processing.');
-          responseSent = true;
-        }
+        return res.status(500).send('Error occurred during video processing.');
       });
 
       ffmpegProcess.on('exit', () => {
-        if (!responseSent) {
-          res.write('data: 100\n\n');
-          res.end();
+        res.write('data: 100\n\n');
+        res.end();
 
-          // Construct the download link
-          const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
+        // Construct the download link
+        const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
 
-          // Send an email with the download link
-          const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // Set to true if using port 465 (secure)
-            auth: {
-              user: 'vpsest@gmail.com',
-              pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
-            },
-          });
+        // Send an email with the download link
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false, // Set to true if using port 465 (secure)
+          auth: {
+            user: 'vpsest@gmail.com',
+            pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
+          },
+        });
 
-          const mailOptions = {
-            from: 'vpsest@gmail.com',
-            to: userEmail,
-            subject: 'Video Encoding Completed',
-            text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
-          };
+        const mailOptions = {
+          from: 'vpsest@gmail.com',
+          to: userEmail,
+          subject: 'Video Encoding Completed',
+          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+        };
 
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              console.error(`Email sending error: ${error}`);
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error(`Email sending error: ${error}`);
+          } else {
+            console.log(`Email sent: ${info.response}`);
+          }
+        });
+
+        // Send the download link to the client
+        res.send(downloadLink);
+
+        // Delete the processed video after 24 hours
+        setTimeout(() => {
+          fs.unlink(outputPath, (err) => {
+            if (err) {
+              console.error(`Error deleting file: ${err}`);
             } else {
-              console.log(`Email sent: ${info.response}`);
+              console.log('Processed video deleted successfully after 24 hours.');
             }
           });
-
-          responseSent = true;
-
-          // Send the download link to the client
-      const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
-      res.setHeader('Content-Type', 'text/plain');
-      res.write(downloadLink);
-      res.end();
-    });
-  });
-});
-
-          // Delete the processed video after 24 hours
-          setTimeout(() => {
-            fs.unlink(outputPath, (err) => {
-              if (err) {
-                console.error(`Error deleting file: ${err}`);
-              } else {
-                console.log('Processed video deleted successfully after 24 hours.');
-              }
-            });
-          }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
-        }
+        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
       });
     });
   });
