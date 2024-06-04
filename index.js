@@ -5,6 +5,7 @@ const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
+const crypto = require('crypto'); // For generating unique filenames
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -38,9 +39,11 @@ app.post('/upload', (req, res) => {
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
 
-  const videoPath = path.join(__dirname, '/uploads/video.mp4');
-  const subtitlesPath = path.join(__dirname, '/uploads/subtitles.srt');
-  const outputPath = path.join(__dirname, '/uploads', outputFileName);
+  // Generate unique filenames
+  const uniqueId = crypto.randomBytes(16).toString('hex');
+  const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
+  const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
+  const outputPath = path.join(__dirname, '/uploads', `output_${uniqueId}.mp4`);
 
   videoFile.mv(videoPath, (err) => {
     if (err) {
@@ -111,7 +114,7 @@ app.post('/upload', (req, res) => {
         res.end();
 
         // Construct the download link
-        const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
+        const downloadLink = `http://${req.hostname}:${port}/uploads/output_${uniqueId}.mp4`;
 
         // Send an email with the download link
         const transporter = nodemailer.createTransport({
