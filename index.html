@@ -1,166 +1,167 @@
-const express = require('express');
-const fileUpload = require('express-fileupload');
-const { exec } = require('child_process');
-const fs = require('fs');
-const readline = require('readline');
-const nodemailer = require('nodemailer');
-const path = require('path'); // Import the path module
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(fileUpload());
-
-app.use('/uploads', express.static(__dirname + '/uploads'));
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
-});
-
-// Serve static files from the "public" directory
-app.use(express.static(__dirname + '/public'));
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
-app.get('/services', (req, res) => {
-  res.sendFile(__dirname + '/public/services.html');
-});
-
-app.get('/contact', (req, res) => {
-  res.sendFile(__dirname + '/public/contact.html');
-});
-
-app.post('/upload', (req, res) => {
-  if (!req.files || !req.files.video || !req.files.subtitles) {
-    return res.status(400).send('Please upload both video and subtitles.');
-  }
-
-  const videoFile = req.files.video;
-  const subtitlesFile = req.files.subtitles;
-  const selectedFont = req.body.font || 'Arial-Bold';
-  const outputFileName = req.body.outputFileName || 'output.mp4';
-  const userEmail = req.body.email;
-
-  const videoPath = __dirname + '/uploads/video.mp4';
-  const subtitlesPath = __dirname + '/uploads/subtitles.srt';
-  const outputPath = path.join(__dirname, 'uploads', outputFileName);
-
-  videoFile.mv(videoPath, (err) => {
-    if (err) {
-      console.error(`Error: ${err.message}`);
-      return res.status(500).send('Error occurred while uploading the video.');
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Videoburner - burn subtitle into video online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Common styles */
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Container styles */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
     }
 
-    subtitlesFile.mv(subtitlesPath, (err) => {
-      if (err) {
-        console.error(`Error: ${err.message}`);
-        return res.status(500).send('Error occurred while uploading the subtitles.');
+    /* Form styles */
+    form {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    select, input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 18px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    progress {
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    /* Download section styles */
+    #downloadSection {
+      margin-top: 20px;
+      display: none;
+    }
+
+    #downloadButton {
+      background-color: #64ffda;
+      color: #121212;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #downloadButton:hover {
+      background-color: #4caf50;
+    }
+
+    /* Responsive styles */
+    @media only screen and (max-width: 600px) {
+      .container {
+        width: 90%;
       }
 
-      const fontMapping = {
-        'Arial-Bold': 'Arial-Bold.ttf',
-        'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-        'Tungsten-Bold': 'Tungsten-Bold.ttf'
-      };
-
-      const selectedFontFile = fontMapping[selectedFont];
-
-      if (!selectedFontFile) {
-        return res.status(400).send('Selected font is not supported.');
+      label, input, select {
+        font-size: 14px;
       }
 
-      const fullFontPath = `fonts/${selectedFontFile}`;
-
-      const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-      const acceptedSubtitleFormats = ['.srt', '.ass'];
-
-      if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-        return res.status(400).send('Selected subtitle format is not supported.');
+      button {
+        font-size: 16px;
       }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload Video and Subtitles</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
 
-      const ffmpegCommand = `ffmpeg -i ${videoPath} -vf "subtitles=${subtitlesPath}:force_style='Fontfile=${fullFontPath}'" ${outputPath}`;
+      <label for="video">Select video (MP4 or MKV):</label>
+      <input type="file" id="video" name="video" accept="video/*" required><br>
 
-      const ffmpegProcess = exec(ffmpegCommand);
+      <label for="subtitles">Select subtitles file (SRT, ASS):</label>
+      <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required><br>
 
-      let totalFrames = 0;
-      let processedFrames = 0;
-      readline.createInterface({ input: ffmpegProcess.stderr })
-        .on('line', (line) => {
-          if (line.includes('frame=')) {
-            const match = line.match(/frame=\s*(\d+)/);
-            if (match && match[1]) {
-              processedFrames = parseInt(match[1]);
-            }
-          }
-          if (line.includes('fps=')) {
-            const match = line.match(/fps=\s*([\d.]+)/);
-            if (match && match[1]) {
-              totalFrames = parseInt(match[1]);
-            }
-          }
-          if (totalFrames > 0 && processedFrames > 0) {
-            const progressPercent = (processedFrames / totalFrames) * 100;
-            res.write(`data: ${progressPercent}\n\n`);
-          }
+      <label for="font">Select subtitle font:</label>
+      <select id="font" name="font">
+        <option value="Arial-Bold">Arial Bold</option>
+        <option value="Juventus Fans Bold">Juventus Fans Bold</option>
+        <option value="Tungsten-Bold">Tungsten-Bold</option>
+      </select><br>
+
+      <label for="outputFileName">Output file name:</label>
+      <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required><br>
+
+      <label for="email">Enter your email To get Download Link:</label>
+      <input type="email" id="email" name="email" placeholder="your_email@example.com" required><br>
+
+      <h3>Timing takes - <br> 10 min = 13 min takes <br> 15 min = 20 min takes <br> 24 min = 30 min takes</h3>
+      <button type="submit">Upload</button>
+    </form>
+
+    <progress id="progressBar" value="0" max="100"></progress>
+
+    <div id="downloadSection">
+      <h2>Video Encoding Successful!</h2>
+      <button id="downloadButton">Download Processed Video If link is not working then check your mail</button>
+    </div>
+
+    <script>
+      const form = document.getElementById('uploadForm');
+      const progressBar = document.getElementById('progressBar');
+      const downloadSection = document.getElementById('downloadSection');
+      const downloadButton = document.getElementById('downloadButton');
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload');
+        xhr.upload.addEventListener('progress', (event) => {
+          const percent = (event.loaded / event.total) * 100;
+          progressBar.value = percent;
         });
 
-      ffmpegProcess.on('error', (error) => {
-        console.error(`Error: ${error.message}`);
-        return res.status(500).send('Error occurred during video processing.');
-      });
-
-      ffmpegProcess.on('exit', () => {
-        res.write('data: 100\n\n');
-        res.end();
-
-        // Construct the download link
-        const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
-
-        // Send an email with the download link
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false, // Set to true if using port 465 (secure)
-          auth: {
-            user: 'vpsest@gmail.com',
-            pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
-          },
-        });
-
-        const mailOptions = {
-          from: 'vpsest@gmail.com',
-          to: userEmail,
-          subject: 'Video Encoding Completed',
-          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+              console.log('Upload completed!');
+              downloadSection.style.display = 'block';
+              const downloadLink = xhr.responseText;
+              downloadButton.addEventListener('click', () => {
+                window.location.href = downloadLink;
+              });
+            } else {
+              console.error('Upload failed!');
+            }
+          }
         };
 
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error(`Email sending error: ${error}`);
-          } else {
-            console.log(`Email sent: ${info.response}`);
-          }
-        });
-
-        // Send the download link to the client
-        res.send(downloadLink);
-
-        // Delete the processed video after 24 hours
-        setTimeout(() => {
-          fs.unlink(outputPath, (err) => {
-            if (err) {
-              console.error(`Error deleting file: ${err}`);
-            } else {
-              console.log('Processed video deleted successfully after 24 hours.');
-            }
-          });
-        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+        xhr.send(formData);
       });
-    });
-  });
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${port}`);
-});
+    </script>
+  </div>
+</body>
+</html>
