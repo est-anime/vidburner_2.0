@@ -117,14 +117,14 @@ app.post('/upload', (req, res) => {
         // Construct the download link
         const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
 
-        // Send an email with the download link
+    // Send an email with the download link
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false, // Set to true if using port 465 (secure)
+          secure: false, // true for 465, false for other ports
           auth: {
             user: 'vpsest@gmail.com',
-            pass: process.env.APP_KEY, // Ensure APP_KEY is set in your .env file
+            pass: process.env.APP_KEY, // Use app-specific password here
           },
         });
 
@@ -138,6 +138,7 @@ app.post('/upload', (req, res) => {
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             console.error(`Email sending error: ${error}`);
+            res.status(500).send('Error sending email');
           } else {
             console.log(`Email sent: ${info.response}`);
           }
