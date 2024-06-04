@@ -14,6 +14,8 @@
       --button-hover-color: #4caf50;
       --button-bg-color: #007bff;
       --font-family: 'Roboto', sans-serif;
+      --progress-bar-bg: #333;
+      --progress-bar-fill: var(--secondary-color);
     }
 
     body {
@@ -77,9 +79,19 @@
       background-color: var(--button-hover-color);
     }
 
-    progress {
+    .progress-container {
       width: 100%;
+      background-color: var(--progress-bar-bg);
+      border-radius: 8px;
+      overflow: hidden;
       margin-top: 15px;
+    }
+
+    .progress-bar {
+      height: 20px;
+      width: 0;
+      background-color: var(--progress-bar-fill);
+      transition: width 0.4s ease;
     }
 
     #downloadSection {
@@ -142,7 +154,9 @@
       <button type="submit">Upload</button>
     </form>
 
-    <progress id="progressBar" value="0" max="100"></progress>
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
 
     <div id="downloadSection">
       <h2>Video Encoding Successful!</h2>
@@ -163,7 +177,7 @@
         xhr.open('POST', '/upload');
         xhr.upload.addEventListener('progress', (event) => {
           const percent = (event.loaded / event.total) * 100;
-          progressBar.value = percent;
+          progressBar.style.width = percent + '%';
         });
 
         xhr.onreadystatechange = () => {
