@@ -66,7 +66,7 @@ app.post('/upload', (req, res) => {
         return res.status(400).send('Selected font is not supported.');
       }
 
-      const fullFontPath = `fonts/${selectedFontFile}`;
+      const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
       const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
       const acceptedSubtitleFormats = ['.srt', '.ass'];
@@ -75,7 +75,7 @@ app.post('/upload', (req, res) => {
         return res.status(400).send('Selected subtitle format is not supported.');
       }
 
-      const ffmpegCommand = `ffmpeg -i ${videoPath} -vf "subtitles=${subtitlesPath}:force_style='Fontfile=${fullFontPath}'" ${outputPath}`;
+      const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
       const ffmpegProcess = exec(ffmpegCommand);
 
