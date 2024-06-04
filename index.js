@@ -141,11 +141,13 @@ app.post('/upload', (req, res) => {
             res.status(500).send('Error sending email');
           } else {
             console.log(`Email sent: ${info.response}`);
+            
+    // Construct the download link
+            const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
+    // Send the download link to the client
+            res.send(downloadLink);
           }
         });
-
-        // Send the download link to the client
-        res.send(downloadLink);
 
         // Delete the processed video after 24 hours
         setTimeout(() => {
