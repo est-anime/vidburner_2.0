@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Videoburner - burn subtitle into video online</title>
+  <title>Videoburner - Burn Subtitle into Video Online</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* Common styles */
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #64ffda;
+      --background-color: #121212;
+      --text-color: #ffffff;
+      --input-border-color: #ccc;
+      --button-hover-color: #4caf50;
+      --button-bg-color: #007bff;
+      --font-family: 'Roboto', sans-serif;
+    }
+
     body {
-      background-color: #121212;
-      color: #ffffff;
-      font-family: Arial, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      font-family: var(--font-family);
       margin: 0;
       padding: 0;
     }
     
-    /* Container styles */
     .container {
       max-width: 800px;
       margin: 0 auto;
@@ -21,7 +31,11 @@
       text-align: center;
     }
 
-    /* Form styles */
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+
     form {
       margin-top: 20px;
       text-align: left;
@@ -29,27 +43,38 @@
 
     label {
       display: block;
-      font-size: 18px;
+      font-size: 1.1em;
       margin-bottom: 5px;
     }
 
-    select, input[type="text"], input[type="file"] {
+    select, input[type="text"], input[type="file"], input[type="email"] {
       width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
+      padding: 12px;
+      font-size: 1em;
+      border: 1px solid var(--input-border-color);
       border-radius: 4px;
       margin-bottom: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
     }
 
     button {
-      background-color: #007bff;
-      color: #ffffff;
+      background-color: var(--button-bg-color);
+      color: var(--text-color);
       border: none;
-      padding: 10px 20px;
-      font-size: 18px;
+      padding: 12px 20px;
+      font-size: 1.1em;
       border-radius: 4px;
       cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: var(--button-hover-color);
     }
 
     progress {
@@ -57,37 +82,35 @@
       margin-top: 15px;
     }
 
-    /* Download section styles */
     #downloadSection {
       margin-top: 20px;
       display: none;
     }
 
     #downloadButton {
-      background-color: #64ffda;
-      color: #121212;
+      background-color: var(--secondary-color);
+      color: var(--background-color);
       border: none;
-      padding: 8px 12px;
+      padding: 10px 15px;
       cursor: pointer;
       transition: background-color 0.3s;
     }
 
     #downloadButton:hover {
-      background-color: #4caf50;
+      background-color: var(--button-hover-color);
     }
 
-    /* Responsive styles */
     @media only screen and (max-width: 600px) {
       .container {
         width: 90%;
       }
 
       label, input, select {
-        font-size: 14px;
+        font-size: 0.9em;
       }
 
       button {
-        font-size: 16px;
+        font-size: 1em;
       }
     }
   </style>
@@ -96,27 +119,26 @@
   <div class="container">
     <h1>Upload Video and Subtitles</h1>
     <form id="uploadForm" enctype="multipart/form-data">
-
       <label for="video">Select video (MP4 or MKV):</label>
-      <input type="file" id="video" name="video" accept="video/*" required><br>
+      <input type="file" id="video" name="video" accept="video/*" required>
 
       <label for="subtitles">Select subtitles file (SRT, ASS):</label>
-      <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required><br>
+      <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required>
 
       <label for="font">Select subtitle font:</label>
       <select id="font" name="font">
         <option value="Arial-Bold">Arial Bold</option>
         <option value="Juventus Fans Bold">Juventus Fans Bold</option>
         <option value="Tungsten-Bold">Tungsten-Bold</option>
-      </select><br>
+      </select>
 
       <label for="outputFileName">Output file name:</label>
-      <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required><br>
+      <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required>
 
-      <label for="email">Enter your email To get Download Link:</label>
-      <input type="email" id="email" name="email" placeholder="your_email@example.com" required><br>
+      <label for="email">Enter your email to get the download link:</label>
+      <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
 
-      <h3>Timing takes - <br> 10 min = 13 min takes <br> 15 min = 20 min takes <br> 24 min = 30 min takes</h3>
+      <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
       <button type="submit">Upload</button>
     </form>
 
@@ -124,7 +146,7 @@
 
     <div id="downloadSection">
       <h2>Video Encoding Successful!</h2>
-      <button id="downloadButton">Download Processed Video If link is not working then check your mail</button>
+      <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
     </div>
 
     <script>
