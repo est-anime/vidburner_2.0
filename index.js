@@ -39,11 +39,11 @@ app.post('/upload', (req, res) => {
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
 
-  // Generate unique filenames
+  // Generate unique filenames for the uploaded files
   const uniqueId = crypto.randomBytes(16).toString('hex');
   const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
   const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
-  const outputPath = path.join(__dirname, '/uploads', `output_${uniqueId}.mp4`);
+  const outputPath = path.join(__dirname, '/uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
     if (err) {
@@ -114,7 +114,7 @@ app.post('/upload', (req, res) => {
         res.end();
 
         // Construct the download link
-        const downloadLink = `http://${req.hostname}:${port}/uploads/output_${uniqueId}.mp4`;
+        const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
 
         // Send an email with the download link
         const transporter = nodemailer.createTransport({
