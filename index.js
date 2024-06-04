@@ -4,7 +4,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
-const path = require('path'); // Import the path module
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,12 +17,8 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Serve static files from the "public" directory
 app.use(express.static(__dirname + '/public'));
 
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
 app.get('/services', (req, res) => {
   res.sendFile(__dirname + '/public/services.html');
 });
@@ -42,9 +38,9 @@ app.post('/upload', (req, res) => {
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
 
-  const videoPath = __dirname + '/uploads/video.mp4';
-  const subtitlesPath = __dirname + '/uploads/subtitles.srt';
-  const outputPath = path.join(__dirname, 'uploads', outputFileName);
+  const videoPath = path.join(__dirname, '/uploads/video.mp4');
+  const subtitlesPath = path.join(__dirname, '/uploads/subtitles.srt');
+  const outputPath = path.join(__dirname, '/uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
     if (err) {
@@ -117,7 +113,7 @@ app.post('/upload', (req, res) => {
         // Construct the download link
         const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
 
-    // Send an email with the download link
+        // Send an email with the download link
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 587,
@@ -138,14 +134,8 @@ app.post('/upload', (req, res) => {
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             console.error(`Email sending error: ${error}`);
-            res.status(500).send('Error sending email');
           } else {
             console.log(`Email sent: ${info.response}`);
-            
-    // Construct the download link
-            const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
-    // Send the download link to the client
-            res.send(downloadLink);
           }
         });
 
