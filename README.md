@@ -45,6 +45,15 @@ VideoBurner is a web application that allows users to upload a video and a subti
 
    The server will start running on `http://0.0.0.0:3000`.
 
+## Deploy on render
+
+**Deploy To Render.com For Free :**
+<div align="center">
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/TechShreyash/TGDrive)
+
+</div>
+
 ## Usage
 
 1. Open your web browser and navigate to `http://0.0.0.0:3000`.
