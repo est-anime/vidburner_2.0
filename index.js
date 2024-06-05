@@ -6,13 +6,11 @@ const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
-require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
-app.use(express.json());
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
@@ -20,39 +18,10 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.use(express.static(__dirname + '/public'));
-
-app.get('/services', (req, res) => {
-  res.sendFile(__dirname + '/public/services.html');
-});
-
-app.get('/contact', (req, res) => {
-  res.sendFile(__dirname + '/public/contact.html');
-});
-
-app.post('/check-password', (req, res) => {
-  const { password } = req.body;
-  if (password === process.env.PASSWORD) {
-    res.json({ success: true });
-  } else {
-    res.json({ success: false });
-  }
-});
-
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
-
-  app.post('/check-password', (req, res) => {
-  const { password } = req.body;
-  if (password === process.env.PASSWORD) {
-    res.json({ success: true });
-  } else {
-    res.json({ success: false });
-  }
-});
-
 
   const videoFile = req.files.video;
   const subtitlesFile = req.files.subtitles;
@@ -143,13 +112,13 @@ app.post('/upload', (req, res) => {
           port: 587,
           secure: false, // true for 465, false for other ports
           auth: {
-            user: 'vpsest@gmail.com',
-            pass: process.env.APP_KEY, // Use app-specific password here
+            user: 'your_email@example.com',
+            pass: 'your_password_here', // Use app-specific password here
           },
         });
 
         const mailOptions = {
-          from: 'vpsest@gmail.com',
+          from: 'your_email@example.com',
           to: userEmail,
           subject: 'Video Encoding Completed',
           text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
