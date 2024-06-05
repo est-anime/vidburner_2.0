@@ -15,18 +15,16 @@ app.use(express.json());
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
-let lastPasswordEntryTimestamp = null;
-
 app.post('/check-password', (req, res) => {
-  const correctPassword = process.env.PASSWORD;
-  const { password } = req.body;
-
-  if (!correctPassword) {
-    console.error('Server password not set.');
-    return res.status(500).json({ success: false, message: 'Server password not set.' });
-  }
-
   try {
+    const correctPassword = process.env.PASSWORD;
+    const { password } = req.body;
+
+    if (!correctPassword) {
+      console.error('Server password not set.');
+      return res.status(500).json({ success: false, message: 'Server password not set.' });
+    }
+
     if (password === correctPassword) {
       const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
       if (lastPasswordEntryTimestamp && lastPasswordEntryTimestamp > twentyFourHoursAgo) {
