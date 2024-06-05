@@ -1,31 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Videoburner - Burn Subtitle into Video Online</title>
+  <title>Videoburner - burn subtitle into video online</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --primary-color: #007bff;
-      --secondary-color: #64ffda;
-      --background-color: #121212;
-      --text-color: #ffffff;
-      --input-border-color: #ccc;
-      --button-hover-color: #4caf50;
-      --button-bg-color: #007bff;
-      --font-family: 'Roboto', sans-serif;
-      --progress-bar-bg: #333;
-      --progress-bar-fill: var(--secondary-color);
-    }
-
+    /* Common styles */
     body {
-      background-color: var(--background-color);
-      color: var(--text-color);
-      font-family: var(--font-family);
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
     }
     
+    /* Container styles */
     .container {
       max-width: 800px;
       margin: 0 auto;
@@ -33,11 +21,7 @@
       text-align: center;
     }
 
-    h1 {
-      font-size: 2.5em;
-      margin-bottom: 20px;
-    }
-
+    /* Form styles */
     form {
       margin-top: 20px;
       text-align: left;
@@ -45,196 +29,143 @@
 
     label {
       display: block;
-      font-size: 1.1em;
+      font-size: 18px;
       margin-bottom: 5px;
     }
 
-    select, input[type="text"], input[type="file"], input[type="email"], input[type="password"] {
+    select, input[type="text"], input[type="file"] {
       width: 100%;
-      padding: 12px;
-      font-size: 1em;
-      border: 1px solid var(--input-border-color);
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
       border-radius: 4px;
       margin-bottom: 15px;
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-color);
-    }
-
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.6);
     }
 
     button {
-      background-color: var(--button-bg-color);
-      color: var(--text-color);
+      background-color: #007bff;
+      color: #ffffff;
       border: none;
-      padding: 12px 20px;
-      font-size: 1.1em;
+      padding: 10px 20px;
+      font-size: 18px;
       border-radius: 4px;
       cursor: pointer;
-      transition: background-color 0.3s;
     }
 
-    button:hover {
-      background-color: var(--button-hover-color);
-    }
-
-    .progress-container {
+    progress {
       width: 100%;
-      background-color: var(--progress-bar-bg);
-      border-radius: 8px;
-      overflow: hidden;
       margin-top: 15px;
     }
 
-    .progress-bar {
-      height: 20px;
-      width: 0;
-      background-color: var(--progress-bar-fill);
-      transition: width 0.4s ease;
-    }
-
+    /* Download section styles */
     #downloadSection {
       margin-top: 20px;
       display: none;
     }
 
     #downloadButton {
-      background-color: var(--secondary-color);
-      color: var(--background-color);
+      background-color: #64ffda;
+      color: #121212;
       border: none;
-      padding: 10px 15px;
+      padding: 8px 12px;
       cursor: pointer;
       transition: background-color 0.3s;
     }
 
     #downloadButton:hover {
-      background-color: var(--button-hover-color);
+      background-color: #4caf50;
     }
 
-    /* Modal styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.4);
-    }
+    /* Responsive styles */
+    @media only screen and (max-width: 600px) {
+      .container {
+        width: 90%;
+      }
 
-    .modal-content {
-      background-color: #333;
-      margin: 15% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 80%;
-      max-width: 400px;
-      text-align: center;
-      color: white;
-    }
+      label, input, select {
+        font-size: 14px;
+      }
 
-    .modal-content input[type="password"] {
-      width: 80%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid var(--input-border-color);
-      border-radius: 4px;
-    }
-
-    .modal-content button {
-      padding: 10px 20px;
-      background-color: var(--button-bg-color);
-      color: var(--text-color);
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .modal-content button:hover {
-      background-color: var(--button-hover-color);
+      button {
+        font-size: 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="modal" id="passwordModal">
-    <div class="modal-content">
-      <h2>Enter Password</h2>
-      <input type="password" id="passwordInput" placeholder="Password">
-      <button id="passwordSubmit">Submit</button>
-      <p id="errorMessage" style="color: red; display: none;">Incorrect Password. Please try again.</p>
-    </div>
-  </div>
-
-  <div class="container" id="mainContent" style="display: none;">
+  <div class="container">
     <h1>Upload Video and Subtitles</h1>
     <form id="uploadForm" enctype="multipart/form-data">
+
       <label for="video">Select video (MP4 or MKV):</label>
-      <input type="file" id="video" name="video" accept="video/*" required>
+      <input type="file" id="video" name="video" accept="video/*" required><br>
 
       <label for="subtitles">Select subtitles file (SRT, ASS):</label>
-      <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required>
+      <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required><br>
 
       <label for="font">Select subtitle font:</label>
       <select id="font" name="font">
         <option value="Arial-Bold">Arial Bold</option>
         <option value="Juventus Fans Bold">Juventus Fans Bold</option>
         <option value="Tungsten-Bold">Tungsten-Bold</option>
-      </select>
+      </select><br>
 
       <label for="outputFileName">Output file name:</label>
-      <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required>
+      <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required><br>
 
-      <label for="email">Enter your email to get the download link:</label>
-      <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
+      <label for="email">Enter your email To get Download Link:</label>
+      <input type="email" id="email" name="email" placeholder="your_email@example.com" required><br>
 
-      <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
+      <h3>Timing takes - <br> 10 min = 13 min takes <br> 15 min = 20 min takes <br> 24 min = 30 min takes</h3>
       <button type="submit">Upload</button>
     </form>
 
-    <div class="progress-container">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
+    <progress id="progressBar" value="0" max="100"></progress>
 
     <div id="downloadSection">
       <h2>Video Encoding Successful!</h2>
-      <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
+      <button id="downloadButton">Download Processed Video If link is not working then check your mail</button>
     </div>
-  </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const passwordModal = document.getElementById('passwordModal');
-      const passwordInput = document.getElementById('passwordInput');
-      const passwordSubmit = document.getElementById('passwordSubmit');
-      const mainContent = document.getElementById('mainContent');
-      const errorMessage = document.getElementById('errorMessage');
+    <a href="/login">Login</a>
+    <a href="/signup">Signup</a>
 
-      passwordModal.style.display = 'block';
 
-      passwordSubmit.addEventListener('click', () => {
-        const password = passwordInput.value;
+    <script>
+      const form = document.getElementById('uploadForm');
+      const progressBar = document.getElementById('progressBar');
+      const downloadSection = document.getElementById('downloadSection');
+      const downloadButton = document.getElementById('downloadButton');
 
-        fetch('/check-password', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ password }),
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              passwordModal.style.display = 'none';
-              mainContent.style.display = 'block';
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload');
+        xhr.upload.addEventListener('progress', (event) => {
+          const percent = (event.loaded / event.total) * 100;
+          progressBar.value = percent;
+        });
+
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+              console.log('Upload completed!');
+              downloadSection.style.display = 'block';
+              const downloadLink = xhr.responseText;
+              downloadButton.addEventListener('click', () => {
+                window.location.href = downloadLink;
+              });
             } else {
-              errorMessage.style.display = 'block';
+              console.error('Upload failed!');
             }
-          });
+          }
+        };
+
+        xhr.send(formData);
       });
-    });
-  </script>
+    </script>
+  </div>
 </body>
 </html>
