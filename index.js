@@ -44,6 +44,16 @@ app.post('/upload', (req, res) => {
     return res.status(400).send('Please upload both video and subtitles.');
   }
 
+  app.post('/check-password', (req, res) => {
+  const { password } = req.body;
+  if (password === process.env.PASSWORD) {
+    res.json({ success: true });
+  } else {
+    res.json({ success: false });
+  }
+});
+
+
   const videoFile = req.files.video;
   const subtitlesFile = req.files.subtitles;
   const selectedFont = req.body.font || 'Arial-Bold';
