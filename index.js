@@ -15,7 +15,6 @@ app.use(express.json());
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
-// Initialize variable to store the last password entry timestamp
 let lastPasswordEntryTimestamp = null;
 
 app.get('/', (req, res) => {
@@ -26,17 +25,20 @@ app.post('/check-password', (req, res) => {
   const correctPassword = process.env.PASSWORD;
   const { password } = req.body;
 
-  // Check if the last password entry was more than 24 hours ago
-  if (lastPasswordEntryTimestamp && Date.now() - lastPasswordEntryTimestamp < 24 * 60 * 60 * 1000) {
-    return res.json({ success: true, message: 'Password entry not required. Last entry within 24 hours.' });
+  if (!correctPassword) {
+    return res.status(500).json({ success: false, message: 'Server password not set.' });
   }
 
   if (password === correctPassword) {
-    // Update the last password entry timestamp
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    if (lastPasswordEntryTimestamp && lastPasswordEntryTimestamp > twentyFourHoursAgo) {
+      return res.json({ success: true, message: 'Password entry not required. Last entry within 24 hours.' });
+    }
+
     lastPasswordEntryTimestamp = Date.now();
-    res.json({ success: true });
+    return res.json({ success: true });
   } else {
-    res.json({ success: false });
+    return res.json({ success: false, message: 'Incorrect password.' });
   }
 });
 
@@ -134,13 +136,13 @@ app.post('/upload', (req, res) => {
           port: 587,
           secure: false, // true for 465, false for other ports
           auth: {
-            user: 'vpsest@gmail.com',
-            pass: process.env.APP_KEY, // Use app-specific password here
+            user: 'your_email@example.com',
+            pass: 'your_password_here', // Use app-specific password here
           },
         });
 
         const mailOptions = {
-          from: 'vpsest@gmail.com',
+          from: 'your_email@example.com',
           to: userEmail,
           subject: 'Video Encoding Completed',
           text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
