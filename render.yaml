@@ -10,7 +10,7 @@ services:
     buildCommand: npm install
     startCommand: node index.js
     envVars:
-      - key: APP_KEY
-        value: false
       - key: Email
+        value: 8000
+      - key: APP_KEY
         sync: false
