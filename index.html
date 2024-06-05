@@ -198,6 +198,24 @@
         xhr.send(formData);
       });
     </script>
+    <script>
+    const password = prompt('Please enter the password to access this site:');
+    fetch('/check-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ password })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.valid) {
+        document.getElementById('content').style.display = 'block';
+      } else {
+        alert('Incorrect password');
+      }
+    });
+  </script>
   </div>
 </body>
 </html>
