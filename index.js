@@ -5,7 +5,7 @@ const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
-const crypto = require('crypto'); // For generating unique filenames
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -20,10 +20,9 @@ app.get('/', (req, res) => {
 });
 
 app.post('/check-password', (req, res) => {
-  // Assuming you have stored the correct password in an environment variable
   const correctPassword = process.env.PASSWORD;
   const { password } = req.body;
-  
+
   if (password === correctPassword) {
     res.json({ success: true });
   } else {
@@ -35,17 +34,15 @@ app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
-  
-  
+
   const videoFile = req.files.video;
   const subtitlesFile = req.files.subtitles;
-  const watermarkFile = req.files.watermark; // New field for watermark
+  const watermarkFile = req.files.watermark;
   const selectedFont = req.body.font || 'Arial-Bold';
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
-  const watermarkPosition = req.body.watermarkPosition || 'tr'; // Default position top-right
+  const watermarkPosition = req.body.watermarkPosition || 'tr';
 
-  // Generate unique filenames for the uploaded files
   const uniqueId = crypto.randomBytes(16).toString('hex');
   const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
   const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
@@ -63,18 +60,18 @@ app.post('/upload', (req, res) => {
         return res.status(500).send('Error occurred while uploading the subtitles.');
       }
 
-       let watermarkFilter = '';
-  if (watermarkFile) {
-    const watermarkPath = path.join(__dirname, `/uploads/watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
-    watermarkFile.mv(watermarkPath, (err) => {
-      if (err) {
-        console.error(`Error: ${err.message}`);
-        return res.status(500).send('Error occurred while uploading the watermark.');
-      }
-    });
+      let watermarkFilter = '';
+      if (watermarkFile) {
+        const watermarkPath = path.join(__dirname, `/uploads/watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
+        watermarkFile.mv(watermarkPath, (err) => {
+          if (err) {
+            console.error(`Error: ${err.message}`);
+            return res.status(500).send('Error occurred while uploading the watermark.');
+          }
+        });
 
-    watermarkFilter = `-i "${watermarkPath}" -filter_complex "overlay=${watermarkPosition}"`;
-  }
+        watermarkFilter = `-i "${watermarkPath}" -filter_complex "overlay=${watermarkPosition}"`;
+      }
 
       const fontMapping = {
         'Arial-Bold': 'Arial-Bold.ttf',
@@ -132,14 +129,12 @@ app.post('/upload', (req, res) => {
         res.write('data: 100\n\n');
         res.end();
 
-        // Construct the download link
         const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
 
-        // Send an email with the download link
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false, // true for 465, false for other ports
+          secure: false,
           auth: {
             user: process.env.Email,
             pass: process.env.APP_KEY,
@@ -161,7 +156,6 @@ app.post('/upload', (req, res) => {
           }
         });
 
-        // Delete the processed video after 24 hours
         setTimeout(() => {
           fs.unlink(outputPath, (err) => {
             if (err) {
@@ -170,7 +164,7 @@ app.post('/upload', (req, res) => {
               console.log('Processed video deleted successfully after 24 hours.');
             }
           });
-        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+        }, 24 * 60 * 60 * 1000);
       });
     });
   });
