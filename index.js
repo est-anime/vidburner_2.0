@@ -117,7 +117,7 @@ app.post('/upload', (req, res) => {
         res.end();
 
         // Construct the download link
-        const downloadLink = `http://${req.hostname}:${port}/uploads/${outputFileName}`;
+        const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
 
         // Send an email with the download link
         const transporter = nodemailer.createTransport({
