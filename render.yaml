@@ -11,6 +11,6 @@ services:
     startCommand: node index.js
     envVars:
       - key: APP_KEY
-        value: true
+        value: false
       - key: Email
-        sync: true
+        sync: false
