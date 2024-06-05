@@ -1,3 +1,4 @@
+index.js - 
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* Your existing CSS here */
     :root {
       --primary-color: #007bff;
       --secondary-color: #64ffda;
@@ -165,17 +165,6 @@
     </div>
 
     <script>
-      // Password prompt script
-      const password = process.env.PASSWORD; // Change this to the desired password
-      let userPassword = prompt("Please enter the password:");
-
-      if (userPassword !== password) {
-        alert("Incorrect password. Redirecting...");
-        window.location.href = "https://www.google.com"; // Redirect to another page
-      } else {
-        alert("Welcome!");
-      }
-
       const form = document.getElementById('uploadForm');
       const progressBar = document.getElementById('progressBar');
       const downloadSection = document.getElementById('downloadSection');
