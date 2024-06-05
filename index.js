@@ -11,11 +11,24 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
+app.use(express.json());
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
+});
+
+app.post('/check-password', (req, res) => {
+  // Assuming you have stored the correct password in an environment variable
+  const correctPassword = process.env.PASSWORD;
+  const { password } = req.body;
+  
+  if (password === correctPassword) {
+    res.json({ success: true });
+  } else {
+    res.json({ success: false });
+  }
 });
 
 app.post('/upload', (req, res) => {
