@@ -6,11 +6,14 @@ const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
+const bodyParser = require('body-parser'); // Import body-parser
+require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
+app.use(bodyParser.json()); // Use body-parser to parse JSON request bodies
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
@@ -26,6 +29,15 @@ app.get('/services', (req, res) => {
 
 app.get('/contact', (req, res) => {
   res.sendFile(__dirname + '/public/contact.html');
+});
+
+app.post('/check-password', (req, res) => {
+  const { password } = req.body;
+  if (password === process.env.PASSWORD) {
+    res.json({ valid: true });
+  } else {
+    res.json({ valid: false });
+  }
 });
 
 app.post('/upload', (req, res) => {
