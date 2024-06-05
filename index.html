@@ -150,6 +150,17 @@
       <label for="email">Enter your email to get the download link:</label>
       <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
 
+      <label for="watermark">Select watermark image (PNG or JPG):</label>
+      <input type="file" id="watermark" name="watermark" accept="image/*">
+      
+      <label for="watermarkPosition">Select watermark position:</label>
+      <select id="watermarkPosition" name="watermarkPosition">
+        <option value="tr">Top Right</option>
+        <option value="tl">Top Left</option>
+        <option value="br">Bottom Right</option>
+        <option value="bl">Bottom Left</option>
+      </select>
+
       <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
       <button type="submit">Upload</button>
     </form>
