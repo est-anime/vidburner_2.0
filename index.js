@@ -125,13 +125,13 @@ app.post('/upload', (req, res) => {
           port: 587,
           secure: false, // true for 465, false for other ports
           auth: {
-            user: 'your_email@example.com',
-            pass: 'your_password_here', // Use app-specific password here
+            user: process.env.Email,
+            pass: process.env.APP_KEY,
           },
         });
 
         const mailOptions = {
-          from: 'your_email@example.com',
+          from: process.env.Email,
           to: userEmail,
           subject: 'Video Encoding Completed',
           text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
