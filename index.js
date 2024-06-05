@@ -17,7 +17,21 @@ app.use(express.json());
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
-app.get('/', (req, res) => {
+// Middleware function to check if access is granted
+function checkAccess(req, res, next) {
+  // Check if access is already granted (stored in local storage)
+  const accessGranted = localStorage.getItem('accessGranted');
+  if (accessGranted === 'true') {
+    // If access is granted, move to the next middleware
+    next();
+  } else {
+    // If access is not granted, return forbidden status
+    return res.status(403).send('Access Forbidden');
+  }
+}
+
+// Endpoint for serving index.html
+app.get('/', checkAccess, (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
