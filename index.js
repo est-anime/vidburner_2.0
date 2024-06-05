@@ -7,6 +7,8 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
 
+require('dotenv').config(); // Load environment variables from .env file
+
 const app = express();
 const port = process.env.PORT || 3000;
 
