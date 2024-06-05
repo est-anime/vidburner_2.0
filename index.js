@@ -35,12 +35,15 @@ app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
-
+  
+  
   const videoFile = req.files.video;
   const subtitlesFile = req.files.subtitles;
+  const watermarkFile = req.files.watermark; // New field for watermark
   const selectedFont = req.body.font || 'Arial-Bold';
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
+  const watermarkPosition = req.body.watermarkPosition || 'tr'; // Default position top-right
 
   // Generate unique filenames for the uploaded files
   const uniqueId = crypto.randomBytes(16).toString('hex');
@@ -59,6 +62,19 @@ app.post('/upload', (req, res) => {
         console.error(`Error: ${err.message}`);
         return res.status(500).send('Error occurred while uploading the subtitles.');
       }
+
+       let watermarkFilter = '';
+  if (watermarkFile) {
+    const watermarkPath = path.join(__dirname, `/uploads/watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
+    watermarkFile.mv(watermarkPath, (err) => {
+      if (err) {
+        console.error(`Error: ${err.message}`);
+        return res.status(500).send('Error occurred while uploading the watermark.');
+      }
+    });
+
+    watermarkFilter = `-i "${watermarkPath}" -filter_complex "overlay=${watermarkPosition}"`;
+  }
 
       const fontMapping = {
         'Arial-Bold': 'Arial-Bold.ttf',
@@ -81,7 +97,7 @@ app.post('/upload', (req, res) => {
         return res.status(400).send('Selected subtitle format is not supported.');
       }
 
-      const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+      const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'", ${watermarkFilter} "${outputPath}"`;
 
       const ffmpegProcess = exec(ffmpegCommand);
 
