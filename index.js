@@ -6,6 +6,7 @@ const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
+require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -19,12 +20,19 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.use(express.static(__dirname + '/public'));
+
+app.get('/services', (req, res) => {
+  res.sendFile(__dirname + '/public/services.html');
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(__dirname + '/public/contact.html');
+});
+
 app.post('/check-password', (req, res) => {
-  // Assuming you have stored the correct password in an environment variable
-  const correctPassword = process.env.PASSWORD;
   const { password } = req.body;
-  
-  if (password === correctPassword) {
+  if (password === process.env.PASSWORD) {
     res.json({ success: true });
   } else {
     res.json({ success: false });
@@ -125,13 +133,13 @@ app.post('/upload', (req, res) => {
           port: 587,
           secure: false, // true for 465, false for other ports
           auth: {
-            user: 'your_email@example.com',
-            pass: 'your_password_here', // Use app-specific password here
+            user: 'vpsest@gmail.com',
+            pass: process.env.APP_KEY, // Use app-specific password here
           },
         });
 
         const mailOptions = {
-          from: 'your_email@example.com',
+          from: 'vpsest@gmail.com',
           to: userEmail,
           subject: 'Video Encoding Completed',
           text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
