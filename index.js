@@ -38,19 +38,6 @@ app.post('/upload', (req, res) => {
     return res.status(400).send('Please upload both video and subtitles.');
   }
 
-app.post('/check-password', (req, res) => {
-  // Assuming you have stored the correct password in an environment variable
-  const correctPassword = process.env.PASSWORD;
-  const { password } = req.body;
-  
-  if (password === correctPassword) {
-    res.json({ success: true });
-  } else {
-    res.json({ success: false });
-  }
-});
-
-  
   const videoFile = req.files.video;
   const subtitlesFile = req.files.subtitles;
   const selectedFont = req.body.font || 'Arial-Bold';
