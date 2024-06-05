@@ -128,7 +128,7 @@
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container" id="content" style="display: none;">
     <h1>Upload Video and Subtitles</h1>
     <form id="uploadForm" enctype="multipart/form-data">
       <label for="video">Select video (MP4 or MKV):</label>
@@ -164,6 +164,23 @@
     </div>
 
     <script>
+      const password = prompt('Please enter the password to access this site:');
+      fetch('/check-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.valid) {
+          document.getElementById('content').style.display = 'block';
+        } else {
+          alert('Incorrect password');
+        }
+      });
+
       const form = document.getElementById('uploadForm');
       const progressBar = document.getElementById('progressBar');
       const downloadSection = document.getElementById('downloadSection');
@@ -198,24 +215,6 @@
         xhr.send(formData);
       });
     </script>
-    <script>
-    const password = prompt('Please enter the password to access this site:');
-    fetch('/check-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ password })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.valid) {
-        document.getElementById('content').style.display = 'block';
-      } else {
-        alert('Incorrect password');
-      }
-    });
-  </script>
   </div>
 </body>
 </html>
