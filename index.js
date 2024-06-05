@@ -6,7 +6,6 @@ const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
-require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,23 +15,25 @@ app.use(express.json());
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
+// Initialize variable to store the last password entry timestamp
+let lastPasswordEntryTimestamp = null;
+
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.use(express.static(__dirname + '/public'));
-
-app.get('/services', (req, res) => {
-  res.sendFile(__dirname + '/public/services.html');
-});
-
-app.get('/contact', (req, res) => {
-  res.sendFile(__dirname + '/public/contact.html');
-});
-
 app.post('/check-password', (req, res) => {
+  const correctPassword = process.env.PASSWORD;
   const { password } = req.body;
-  if (password === process.env.PASSWORD) {
+
+  // Check if the last password entry was more than 24 hours ago
+  if (lastPasswordEntryTimestamp && Date.now() - lastPasswordEntryTimestamp < 24 * 60 * 60 * 1000) {
+    return res.json({ success: true, message: 'Password entry not required. Last entry within 24 hours.' });
+  }
+
+  if (password === correctPassword) {
+    // Update the last password entry timestamp
+    lastPasswordEntryTimestamp = Date.now();
     res.json({ success: true });
   } else {
     res.json({ success: false });
