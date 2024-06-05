@@ -152,6 +152,10 @@
 
       <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
       <button type="submit">Upload</button>
+      <label for="password">Password:</label>
+  <input type="password" id="password" name="password" required>
+  <button type="submit">Submit</button>
+  <p id="passwordError" style="color: red; display: none;">Incorrect password. Please try again.</p>
     </form>
 
     <div class="progress-container">
@@ -168,6 +172,28 @@
       const progressBar = document.getElementById('progressBar');
       const downloadSection = document.getElementById('downloadSection');
       const downloadButton = document.getElementById('downloadButton');
+      const passwordForm = document.getElementById('passwordForm');
+      const passwordError = document.getElementById('passwordError');
+
+      passwordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+    const password = document.getElementById('password').value;
+    const response = await fetch('/check-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ password })
+    });
+    const data = await response.json();
+    if (data.success) {
+      // Redirect or show the main page
+      window.location.href = '/'; // Assuming your main page is served at '/'
+    } else {
+      // Show error message
+      passwordError.style.display = 'block';
+    }
+  });
 
       form.addEventListener('submit', (e) => {
         e.preventDefault();
