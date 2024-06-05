@@ -15,30 +15,19 @@ app.use(express.json());
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
+
 app.post('/check-password', (req, res) => {
-  try {
-    const correctPassword = process.env.PASSWORD;
-    const { password } = req.body;
-
-    if (!correctPassword) {
-      console.error('Server password not set.');
-      return res.status(500).json({ success: false, message: 'Server password not set.' });
-    }
-
-    if (password === correctPassword) {
-      const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
-      if (lastPasswordEntryTimestamp && lastPasswordEntryTimestamp > twentyFourHoursAgo) {
-        return res.json({ success: true, message: 'Password entry not required. Last entry within 24 hours.' });
-      }
-
-      lastPasswordEntryTimestamp = Date.now();
-      return res.json({ success: true });
-    } else {
-      return res.json({ success: false, message: 'Incorrect password.' });
-    }
-  } catch (error) {
-    console.error('Error in /check-password route:', error);
-    return res.status(500).json({ success: false, message: 'Internal Server Error.' });
+  // Assuming you have stored the correct password in an environment variable
+  const correctPassword = process.env.PASSWORD;
+  const { password } = req.body;
+  
+  if (password === correctPassword) {
+    res.json({ success: true });
+  } else {
+    res.json({ success: false });
   }
 });
 
