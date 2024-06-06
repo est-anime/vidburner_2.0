@@ -5,7 +5,7 @@ const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
-const crypto = require('crypto'); // For generating unique filenames
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -13,58 +13,65 @@ const port = process.env.PORT || 3000;
 app.use(fileUpload());
 app.use(express.json());
 
-app.use('/uploads', express.static(__dirname + '/uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/watermarks', express.static(path.join(__dirname, 'watermarks')));
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.post('/check-password', (req, res) => {
-  // Assuming you have stored the correct password in an environment variable
-  const correctPassword = process.env.PASSWORD;
-  const { password } = req.body;
-
-  if (password === correctPassword) {
-    res.json({ success: true });
-  } else {
-    res.json({ success: false });
-  }
-});
 
 app.post('/upload', (req, res) => {
-  if (!req.files || !req.files.video || !req.files.subtitles) {
+  if (!req.files || !req.files.video || !req.files.subtitles || req.files.watermark) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
 
   const videoFile = req.files.video;
   const subtitlesFile = req.files.subtitles;
-  const watermarkFile = req.files.watermark; // Added line to get watermark file
-  const watermarkPosition = req.body.watermarkPosition || 'main_w-overlay_w-10:10'; // Added default position
+  const watermarkFile = req.files.watermark;
   const selectedFont = req.body.font || 'Arial-Bold';
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
+  const watermarkPosition = req.body.watermarkPosition || 'main_w-overlay_w-10:10';
 
-  // Generate unique filenames for the uploaded files
   const uniqueId = crypto.randomBytes(16).toString('hex');
   const videoPath = path.join(__dirname, 'uploads', `video_${uniqueId}.mp4`);
   const subtitlesPath = path.join(__dirname, 'uploads', `subtitles_${uniqueId}.srt`);
   const outputPath = path.join(__dirname, 'uploads', outputFileName);
-  
-  // Watermark file handling
-  let watermarkFilter = '';
-  let watermarkPath = '';
-  if (watermarkFile) {
-    watermarkPath = path.join(__dirname, `/watermarks/watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
-    watermarkFile.mv(watermarkPath, (err) => {
+
+  console.log('Uploading video to:', videoPath);
+  videoFile.mv(videoPath, (err) => {
+    if (err) {
+      console.error(`Error: ${err.message}`);
+      return res.status(500).send('Error occurred while uploading the video.');
+    }
+
+    console.log('Uploading subtitles to:', subtitlesPath);
+    subtitlesFile.mv(subtitlesPath, (err) => {
       if (err) {
         console.error(`Error: ${err.message}`);
-        return res.status(500).send('Error occurred while uploading the watermark.');
+        return res.status(500).send('Error occurred while uploading the subtitles.');
       }
-    });
 
-    watermarkFilter = `-i "${watermarkPath}" -filter_complex "overlay=${watermarkPosition}"`;
-  }
-  
+      let watermarkFilter = '';
+      if (watermarkFile) {
+        const watermarkPath = path.join(__dirname, 'watermarks', `watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
+        console.log(`Uploading watermark to: ${watermarkPath}`);
+
+        watermarkFile.mv(watermarkPath, (err) => {
+          if (err) {
+            console.error(`Error: ${err.message}`);
+            return res.status(500).send('Error occurred while uploading the watermark.');
+          }
+
+          watermarkFilter = `-i "${watermarkPath}" -filter_complex "[0:v][1:v] overlay=${watermarkPosition}"`;
+          processVideoWithSubtitlesAndWatermark();
+        });
+      } else {
+        processVideoWithSubtitlesAndWatermark();
+      }
+
+      function processVideoWithSubtitlesAndWatermark() {
         const fontMapping = {
           'Arial-Bold': 'Arial-Bold.ttf',
           'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
