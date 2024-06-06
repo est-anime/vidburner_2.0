@@ -1,214 +1,193 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Videoburner - Burn Subtitle into Video Online</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary-color: #007bff;
-      --secondary-color: #64ffda;
-      --background-color: #121212;
-      --text-color: #ffffff;
-      --input-border-color: #ccc;
-      --button-hover-color: #4caf50;
-      --button-bg-color: #007bff;
-      --font-family: 'Roboto', sans-serif;
-      --progress-bar-bg: #333;
-      --progress-bar-fill: var(--secondary-color);
+const express = require('express');
+const fileUpload = require('express-fileupload');
+const { exec } = require('child_process');
+const fs = require('fs');
+const readline = require('readline');
+const nodemailer = require('nodemailer');
+const path = require('path');
+const crypto = require('crypto'); // For generating unique filenames
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(fileUpload());
+app.use(express.json());
+
+app.use('/uploads', express.static(__dirname + '/uploads'));
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
+
+app.post('/check-password', (req, res) => {
+  // Assuming you have stored the correct password in an environment variable
+  const correctPassword = process.env.PASSWORD;
+  const { password } = req.body;
+
+  if (password === correctPassword) {
+    res.json({ success: true });
+  } else {
+    res.json({ success: false });
+  }
+});
+
+app.post('/upload', (req, res) => {
+  if (!req.files || !req.files.video || !req.files.subtitles) {
+    return res.status(400).send('Please upload both video and subtitles.');
+  }
+
+  const videoFile = req.files.video;
+  const subtitlesFile = req.files.subtitles;
+  const watermarkFile = req.files.watermark; // Added line to get watermark file
+  const watermarkPosition = req.body.watermarkPosition || 'main_w-overlay_w-10:10'; // Added default position
+  const selectedFont = req.body.font || 'Arial-Bold';
+  const outputFileName = req.body.outputFileName || 'output.mp4';
+  const userEmail = req.body.email;
+
+  // Generate unique filenames for the uploaded files
+  const uniqueId = crypto.randomBytes(16).toString('hex');
+  const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
+  const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
+  const outputPath = path.join(__dirname, '/uploads', outputFileName);
+
+  // Watermark file handling
+  let watermarkFilter = '';
+  let watermarkPath = '';
+  if (watermarkFile) {
+    watermarkPath = path.join(__dirname, `/watermarks/watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
+    watermarkFile.mv(watermarkPath, (err) => {
+      if (err) {
+        console.error(`Error: ${err.message}`);
+        return res.status(500).send('Error occurred while uploading the watermark.');
+      }
+    });
+
+    watermarkFilter = `-i "${watermarkPath}" -filter_complex "overlay=${watermarkPosition}"`;
+  }
+
+  videoFile.mv(videoPath, (err) => {
+    if (err) {
+      console.error(`Error: ${err.message}`);
+      return res.status(500).send('Error occurred while uploading the video.');
     }
 
-    body {
-      background-color: var(--background-color);
-      color: var(--text-color);
-      font-family: var(--font-family);
-      margin: 0;
-      padding: 0;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 2.5em;
-      margin-bottom: 20px;
-    }
-
-    form {
-      margin-top: 20px;
-      text-align: left;
-    }
-
-    label {
-      display: block;
-      font-size: 1.1em;
-      margin-bottom: 5px;
-    }
-
-    select, input[type="text"], input[type="file"], input[type="email"] {
-      width: 100%;
-      padding: 12px;
-      font-size: 1em;
-      border: 1px solid var(--input-border-color);
-      border-radius: 4px;
-      margin-bottom: 15px;
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-color);
-    }
-
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    button {
-      background-color: var(--button-bg-color);
-      color: var(--text-color);
-      border: none;
-      padding: 12px 20px;
-      font-size: 1.1em;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    button:hover {
-      background-color: var(--button-hover-color);
-    }
-
-    .progress-container {
-      width: 100%;
-      background-color: var(--progress-bar-bg);
-      border-radius: 8px;
-      overflow: hidden;
-      margin-top: 15px;
-    }
-
-    .progress-bar {
-      height: 20px;
-      width: 0;
-      background-color: var(--progress-bar-fill);
-      transition: width 0.4s ease;
-    }
-
-    #downloadSection {
-      margin-top: 20px;
-      display: none;
-    }
-
-    #downloadButton {
-      background-color: var(--secondary-color);
-      color: var(--background-color);
-      border: none;
-      padding: 10px 15px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    #downloadButton:hover {
-      background-color: var(--button-hover-color);
-    }
-
-    @media only screen and (max-width: 600px) {
-      .container {
-        width: 90%;
+    subtitlesFile.mv(subtitlesPath, (err) => {
+      if (err) {
+        console.error(`Error: ${err.message}`);
+        return res.status(500).send('Error occurred while uploading the subtitles.');
       }
 
-      label, input, select {
-        font-size: 0.9em;
+      const fontMapping = {
+        'Arial-Bold': 'Arial-Bold.ttf',
+        'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+        'Tungsten-Bold': 'Tungsten-Bold.ttf'
+      };
+
+      const selectedFontFile = fontMapping[selectedFont];
+
+      if (!selectedFontFile) {
+        return res.status(400).send('Selected font is not supported.');
       }
 
-      button {
-        font-size: 1em;
+      const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+      const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+      const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+      if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+        return res.status(400).send('Selected subtitle format is not supported.');
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Upload Video and Subtitles</h1>
-    <form id="uploadForm" enctype="multipart/form-data">
-      <label for="video">Select video (MP4 or MKV):</label>
-      <input type="file" id="video" name="video" accept="video/*" required>
 
-      <label for="subtitles">Select subtitles file (SRT, ASS):</label>
-      <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required>
+      const ffmpegCommand = watermarkFilter
+        ? `ffmpeg -i "${videoPath}" ${watermarkFilter} -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`
+        : `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
-      <label for="watermark">Select watermark image (PNG, JPG):</label>
-      <input type="file" id="watermark" name="watermark" accept=".png, .jpg">
+      const ffmpegProcess = exec(ffmpegCommand);
 
-      <label for="watermarkPosition">Select watermark position:</label>
-      <select id="watermarkPosition" name="watermarkPosition">
-        <option value="main_w-overlay_w-10:10">Top Right</option>
-        <option value="10:10">Top Left</option>
-        <option value="main_w-overlay_w-10:main_h-overlay_h-10">Bottom Right</option>
-        <option value="10:main_h-overlay_h-10">Bottom Left</option>
-      </select>
-
-      <label for="font">Select subtitle font:</label>
-      <select id="font" name="font">
-        <option value="Arial-Bold">Arial Bold</option>
-        <option value="Juventus Fans Bold">Juventus Fans Bold</option>
-        <option value="Tungsten-Bold">Tungsten-Bold</option>
-      </select>
-
-      <label for="outputFileName">Output file name:</label>
-      <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required>
-
-      <label for="email">Enter your email to get the download link:</label>
-      <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
-
-      <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
-      <button type="submit">Upload</button>
-    </form>
-
-    <div class="progress-container">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-
-    <div id="downloadSection">
-      <h2>Video Encoding Successful!</h2>
-      <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
-    </div>
-
-    <script>
-      const form = document.getElementById('uploadForm');
-      const progressBar = document.getElementById('progressBar');
-      const downloadSection = document.getElementById('downloadSection');
-      const downloadButton = document.getElementById('downloadButton');
-
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/upload');
-        xhr.upload.addEventListener('progress', (event) => {
-          const percent = (event.loaded / event.total) * 100;
-          progressBar.style.width = percent + '%';
-        });
-
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-              console.log('Upload completed!');
-              downloadSection.style.display = 'block';
-              const downloadLink = xhr.responseText;
-              downloadButton.addEventListener('click', () => {
-                window.location.href = downloadLink;
-              });
-            } else {
-              console.error('Upload failed!');
+      let totalFrames = 0;
+      let processedFrames = 0;
+      readline.createInterface({ input: ffmpegProcess.stderr })
+        .on('line', (line) => {
+          if (line.includes('frame=')) {
+            const match = line.match(/frame=\s*(\d+)/);
+            if (match && match[1]) {
+              processedFrames = parseInt(match[1]);
             }
           }
+          if (line.includes('fps=')) {
+            const match = line.match(/fps=\s*([\d.]+)/);
+            if (match && match[1]) {
+              totalFrames = parseInt(match[1]);
+            }
+          }
+          if (totalFrames > 0 && processedFrames > 0) {
+            const progressPercent = (processedFrames / totalFrames) * 100;
+            res.write(`data: ${progressPercent}\n\n`);
+          }
+        });
+
+      ffmpegProcess.on('error', (error) => {
+        console.error(`Error: ${error.message}`);
+        return res.status(500).send('Error occurred during video processing.');
+      });
+
+      ffmpegProcess.on('exit', () => {
+        res.write('data: 100\n\n');
+        res.end();
+
+        // Construct the download link
+        const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
+
+        // Send an email with the download link
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false, // true for 465, false for other ports
+          auth: {
+            user: process.env.Email,
+            pass: process.env.APP_KEY,
+          },
+        });
+
+        const mailOptions = {
+          from: process.env.Email,
+          to: userEmail,
+          subject: 'Video Encoding Completed',
+          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
         };
 
-        xhr.send(formData);
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error(`Email sending error: ${error}`);
+          } else {
+            console.log(`Email sent: ${info.response}`);
+          }
+        });
+
+        // Delete the processed video after 24 hours
+        setTimeout(() => {
+          fs.unlink(outputPath, (err) => {
+            if (err) {
+              console.error(`Error deleting file: ${err}`);
+            } else {
+              console.log('Processed video deleted successfully after 24 hours.');
+            }
+          });
+          if (watermarkPath) {
+            fs.unlink(watermarkPath, (err) => {
+              if (err) {
+                console.error(`Error deleting watermark file: ${err}`);
+              } else {
+                console.log('Watermark file deleted successfully after 24 hours.');
+              }
+            });
+          }
+        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
       });
-    </script>
-  </div>
-</body>
-</html>
+    });
+  });
+});
+
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${port}`);
+});
