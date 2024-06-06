@@ -69,9 +69,8 @@ app.post('/upload', (req, res) => {
             return res.status(500).send('Error occurred while uploading the watermark.');
           }
 
-          watermarkFilter = `-i "${watermarkPath}" -filter_complex "[0:v][1:v] overlay=${watermarkPosition}"`;
+          watermarkFilter = `-i "${watermarkPath}" -filter_complex "[0:v][1:v] overlay=${watermarkPosition},subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'"`;
 
-          // Proceed with ffmpeg command after the watermark has been uploaded
           processVideoWithSubtitlesAndWatermark();
         });
       } else {
@@ -101,7 +100,7 @@ app.post('/upload', (req, res) => {
         }
 
         const ffmpegCommand = watermarkFilter
-          ? `ffmpeg -i "${videoPath}" ${watermarkFilter} -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`
+          ? `ffmpeg -i "${videoPath}" -i "${watermarkPath}" -filter_complex "[0:v][1:v] overlay=${watermarkPosition},subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`
           : `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
         const ffmpegProcess = exec(ffmpegCommand);
