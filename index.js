@@ -19,17 +19,6 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.post('/check-password', (req, res) => {
-  const correctPassword = process.env.PASSWORD;
-  const { password } = req.body;
-
-  if (password === correctPassword) {
-    res.json({ success: true });
-  } else {
-    res.json({ success: false });
-  }
-});
-
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
