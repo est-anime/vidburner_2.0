@@ -25,7 +25,7 @@
       margin: 0;
       padding: 0;
     }
-
+    
     .container {
       max-width: 800px;
       margin: 0 auto;
@@ -137,17 +137,6 @@
       <label for="subtitles">Select subtitles file (SRT, ASS):</label>
       <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required>
 
-      <label for="watermark">Select watermark image (PNG, JPG):</label>
-      <input type="file" id="watermark" name="watermark" accept=".png, .jpg">
-
-      <label for="watermarkPosition">Select watermark position:</label>
-      <select id="watermarkPosition" name="watermarkPosition">
-        <option value="main_w-overlay_w-10:10">Top Right</option>
-        <option value="10:10">Top Left</option>
-        <option value="main_w-overlay_w-10:main_h-overlay_h-10">Bottom Right</option>
-        <option value="10:main_h-overlay_h-10">Bottom Left</option>
-      </select>
-
       <label for="font">Select subtitle font:</label>
       <select id="font" name="font">
         <option value="Arial-Bold">Arial Bold</option>
@@ -160,6 +149,17 @@
 
       <label for="email">Enter your email to get the download link:</label>
       <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
+
+      <label for="watermark">Select watermark image (PNG or JPG):</label>
+      <input type="file" id="watermark" name="watermark" accept="image/*">
+      
+      <label for="watermarkPosition">Select watermark position:</label>
+      <select id="watermarkPosition" name="watermarkPosition">
+        <option value="tr">Top Right</option>
+        <option value="tl">Top Left</option>
+        <option value="br">Bottom Right</option>
+        <option value="bl">Bottom Left</option>
+      </select>
 
       <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
       <button type="submit">Upload</button>
