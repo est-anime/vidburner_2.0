@@ -5,7 +5,7 @@ const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
-const crypto = require('crypto'); // For generating unique filenames
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -13,17 +13,17 @@ const port = process.env.PORT || 3000;
 app.use(fileUpload());
 app.use(express.json());
 
-app.use('/uploads', express.static(__dirname + '/uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/watermarks', express.static(path.join(__dirname, 'watermarks')));
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.post('/check-password', (req, res) => {
-  // Assuming you have stored the correct password in an environment variable
   const correctPassword = process.env.PASSWORD;
   const { password } = req.body;
-  
+
   if (password === correctPassword) {
     res.json({ success: true });
   } else {
@@ -38,70 +38,77 @@ app.post('/upload', (req, res) => {
 
   const videoFile = req.files.video;
   const subtitlesFile = req.files.subtitles;
-  const watermarkFile = req.files.watermark; // Added line to get watermark file
-  const watermarkPosition = req.body.watermarkPosition || 'main_w-overlay_w-10:10'; // Added default position
+  const watermarkFile = req.files.watermark;
   const selectedFont = req.body.font || 'Arial-Bold';
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
+  const watermarkPosition = req.body.watermarkPosition || 'main_w-overlay_w-10:10';
 
-  // Generate unique filenames for the uploaded files
   const uniqueId = crypto.randomBytes(16).toString('hex');
-  const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
-  const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
-  const outputPath = path.join(__dirname, '/uploads', outputFileName);
-  
-  // Watermark file handling
-  let watermarkFilter = '';
-  if (watermarkFile) {
-    const watermarkPath = path.join(__dirname, `/uploads/watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
-    watermarkFile.mv(watermarkPath, (err) => {
-      if (err) {
-        console.error(`Error: ${err.message}`);
-        return res.status(500).send('Error occurred while uploading the watermark.');
-      }
-    });
+  const videoPath = path.join(__dirname, 'uploads', `video_${uniqueId}.mp4`);
+  const subtitlesPath = path.join(__dirname, 'uploads', `subtitles_${uniqueId}.srt`);
+  const outputPath = path.join(__dirname, 'uploads', outputFileName);
 
-    watermarkFilter = `-i "${watermarkPath}" -filter_complex "overlay=${watermarkPosition}"`;
-  }
-
+  console.log('Uploading video to:', videoPath);
   videoFile.mv(videoPath, (err) => {
     if (err) {
       console.error(`Error: ${err.message}`);
       return res.status(500).send('Error occurred while uploading the video.');
     }
 
+    console.log('Uploading subtitles to:', subtitlesPath);
     subtitlesFile.mv(subtitlesPath, (err) => {
       if (err) {
         console.error(`Error: ${err.message}`);
         return res.status(500).send('Error occurred while uploading the subtitles.');
       }
 
-      const fontMapping = {
-        'Arial-Bold': 'Arial-Bold.ttf',
-        'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-        'Tungsten-Bold': 'Tungsten-Bold.ttf'
-      };
+      let watermarkFilter = '';
+      if (watermarkFile) {
+        const watermarkPath = path.join(__dirname, 'watermarks', `watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
+        console.log(`Uploading watermark to: ${watermarkPath}`);
 
-      const selectedFontFile = fontMapping[selectedFont];
+        watermarkFile.mv(watermarkPath, (err) => {
+          if (err) {
+            console.error(`Error: ${err.message}`);
+            return res.status(500).send('Error occurred while uploading the watermark.');
+          }
 
-      if (!selectedFontFile) {
-        return res.status(400).send('Selected font is not supported.');
+          watermarkFilter = `-i "${watermarkPath}" -filter_complex "[0:v][1:v] overlay=${watermarkPosition}"`;
+          processVideoWithSubtitlesAndWatermark();
+        });
+      } else {
+        processVideoWithSubtitlesAndWatermark();
       }
 
-      const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+      function processVideoWithSubtitlesAndWatermark() {
+        const fontMapping = {
+          'Arial-Bold': 'Arial-Bold.ttf',
+          'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+          'Tungsten-Bold': 'Tungsten-Bold.ttf'
+        };
 
-      const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-      const acceptedSubtitleFormats = ['.srt', '.ass'];
+        const selectedFontFile = fontMapping[selectedFont];
 
-      if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-        return res.status(400).send('Selected subtitle format is not supported.');
-      }
+        if (!selectedFontFile) {
+          return res.status(400).send('Selected font is not supported.');
+        }
 
-      const ffmpegCommand = watermarkFilter
-        ? `ffmpeg -i "${videoPath}" ${watermarkFilter} -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`
-        : `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+        const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
-      const ffmpegProcess = exec(ffmpegCommand);
+        const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+        const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+        if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+          return res.status(400).send('Selected subtitle format is not supported.');
+        }
+
+        const ffmpegCommand = watermarkFilter
+          ? `ffmpeg -i "${videoPath}" ${watermarkFilter} -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`
+          : `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+
+        console.log('Running ffmpeg command:', ffmpegCommand);
+        const ffmpegProcess = exec(ffmpegCommand);
 
         let totalFrames = 0;
         let processedFrames = 0;
