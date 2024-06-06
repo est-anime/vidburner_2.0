@@ -184,6 +184,11 @@
         e.preventDefault();
         const formData = new FormData(form);
 
+        // Log FormData entries for debugging
+        for (const pair of formData.entries()) {
+          console.log(pair[0], pair[1]);
+        }
+
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/upload');
         xhr.upload.addEventListener('progress', (event) => {
@@ -202,6 +207,7 @@
               });
             } else {
               console.error('Upload failed!');
+              alert('Upload failed! Please try again.');
             }
           }
         };
