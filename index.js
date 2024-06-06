@@ -13,11 +13,10 @@ const port = process.env.PORT || 3000;
 app.use(fileUpload());
 app.use(express.json());
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/watermarks', express.static(path.join(__dirname, 'watermarks')));
+app.use('/uploads', express.static(__dirname + '/uploads'));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(__dirname + '/index.html');
 });
 
 app.post('/check-password', (req, res) => {
@@ -32,7 +31,7 @@ app.post('/check-password', (req, res) => {
 });
 
 app.post('/upload', (req, res) => {
-  if (!req.files || !req.files.video || !req.files.subtitles) {
+  if (!req.files || !req.files.video || !req.files.subtitles || req.files.watermark) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
 
@@ -45,18 +44,16 @@ app.post('/upload', (req, res) => {
   const watermarkPosition = req.body.watermarkPosition || 'main_w-overlay_w-10:10';
 
   const uniqueId = crypto.randomBytes(16).toString('hex');
-  const videoPath = path.join(__dirname, 'uploads', `video_${uniqueId}.mp4`);
-  const subtitlesPath = path.join(__dirname, 'uploads', `subtitles_${uniqueId}.srt`);
-  const outputPath = path.join(__dirname, 'uploads', outputFileName);
+  const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
+  const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
+  const outputPath = path.join(__dirname, '/uploads', outputFileName);
 
-  console.log('Uploading video to:', videoPath);
   videoFile.mv(videoPath, (err) => {
     if (err) {
       console.error(`Error: ${err.message}`);
       return res.status(500).send('Error occurred while uploading the video.');
     }
 
-    console.log('Uploading subtitles to:', subtitlesPath);
     subtitlesFile.mv(subtitlesPath, (err) => {
       if (err) {
         console.error(`Error: ${err.message}`);
@@ -65,16 +62,15 @@ app.post('/upload', (req, res) => {
 
       let watermarkFilter = '';
       if (watermarkFile) {
-        const watermarkPath = path.join(__dirname, 'watermarks', `watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
-        console.log(`Uploading watermark to: ${watermarkPath}`);
-
+        const watermarkPath = path.join(__dirname, `/uploads/watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
         watermarkFile.mv(watermarkPath, (err) => {
           if (err) {
             console.error(`Error: ${err.message}`);
             return res.status(500).send('Error occurred while uploading the watermark.');
           }
 
-          watermarkFilter = `-i "${watermarkPath}" -filter_complex "[0:v][1:v] overlay=${watermarkPosition}"`;
+          watermarkFilter = `-i "${watermarkPath}" -filter_complex "[0:v][1:v] overlay=${watermarkPosition},subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'"`;
+
           processVideoWithSubtitlesAndWatermark();
         });
       } else {
@@ -104,10 +100,9 @@ app.post('/upload', (req, res) => {
         }
 
         const ffmpegCommand = watermarkFilter
-          ? `ffmpeg -i "${videoPath}" ${watermarkFilter} -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`
+          ? `ffmpeg -i "${videoPath}" -i "${watermarkPath}" -filter_complex "[0:v][1:v] overlay=${watermarkPosition},subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`
           : `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
-        console.log('Running ffmpeg command:', ffmpegCommand);
         const ffmpegProcess = exec(ffmpegCommand);
 
         let totalFrames = 0;
