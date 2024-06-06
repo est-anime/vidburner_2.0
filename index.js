@@ -46,10 +46,10 @@ app.post('/upload', (req, res) => {
 
   // Generate unique filenames for the uploaded files
   const uniqueId = crypto.randomBytes(16).toString('hex');
-  const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
-  const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
-  const outputPath = path.join(__dirname, '/uploads', outputFileName);
-
+  const videoPath = path.join(__dirname, 'uploads', `video_${uniqueId}.mp4`);
+  const subtitlesPath = path.join(__dirname, 'uploads', `subtitles_${uniqueId}.srt`);
+  const outputPath = path.join(__dirname, 'uploads', outputFileName);
+  
   // Watermark file handling
   let watermarkFilter = '';
   let watermarkPath = '';
@@ -64,20 +64,7 @@ app.post('/upload', (req, res) => {
 
     watermarkFilter = `-i "${watermarkPath}" -filter_complex "overlay=${watermarkPosition}"`;
   }
-
-  videoFile.mv(videoPath, (err) => {
-    if (err) {
-      console.error(`Error: ${err.message}`);
-      return res.status(500).send('Error occurred while uploading the video.');
-    }
-
-    subtitlesFile.mv(subtitlesPath, (err) => {
-      if (err) {
-        console.error(`Error: ${err.message}`);
-        return res.status(500).send('Error occurred while uploading the subtitles.');
-      }
-      
-      function processVideoWithSubtitlesAndWatermark() {
+  
         const fontMapping = {
           'Arial-Bold': 'Arial-Bold.ttf',
           'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
