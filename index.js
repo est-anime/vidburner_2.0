@@ -20,19 +20,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.post('/check-password', (req, res) => {
-  const correctPassword = process.env.PASSWORD;
-  const { password } = req.body;
-
-  if (password === correctPassword) {
-    res.json({ success: true });
-  } else {
-    res.json({ success: false });
-  }
-});
 
 app.post('/upload', (req, res) => {
-  if (!req.files || !req.files.video || !req.files.subtitles) {
+  if (!req.files || !req.files.video || !req.files.subtitles || req.files.watermark) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
 
@@ -49,12 +39,14 @@ app.post('/upload', (req, res) => {
   const subtitlesPath = path.join(__dirname, 'uploads', `subtitles_${uniqueId}.srt`);
   const outputPath = path.join(__dirname, 'uploads', outputFileName);
 
+  console.log('Uploading video to:', videoPath);
   videoFile.mv(videoPath, (err) => {
     if (err) {
       console.error(`Error: ${err.message}`);
       return res.status(500).send('Error occurred while uploading the video.');
     }
 
+    console.log('Uploading subtitles to:', subtitlesPath);
     subtitlesFile.mv(subtitlesPath, (err) => {
       if (err) {
         console.error(`Error: ${err.message}`);
@@ -64,6 +56,8 @@ app.post('/upload', (req, res) => {
       let watermarkFilter = '';
       if (watermarkFile) {
         const watermarkPath = path.join(__dirname, 'watermarks', `watermark_${uniqueId}.${watermarkFile.name.split('.').pop()}`);
+        console.log(`Uploading watermark to: ${watermarkPath}`);
+
         watermarkFile.mv(watermarkPath, (err) => {
           if (err) {
             console.error(`Error: ${err.message}`);
@@ -71,7 +65,6 @@ app.post('/upload', (req, res) => {
           }
 
           watermarkFilter = `-i "${watermarkPath}" -filter_complex "[0:v][1:v] overlay=${watermarkPosition}"`;
-
           processVideoWithSubtitlesAndWatermark();
         });
       } else {
@@ -104,6 +97,7 @@ app.post('/upload', (req, res) => {
           ? `ffmpeg -i "${videoPath}" ${watermarkFilter} -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`
           : `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
+        console.log('Running ffmpeg command:', ffmpegCommand);
         const ffmpegProcess = exec(ffmpegCommand);
 
         let totalFrames = 0;
