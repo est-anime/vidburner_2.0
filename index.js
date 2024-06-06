@@ -20,7 +20,6 @@ app.get('/', (req, res) => {
 });
 
 app.post('/check-password', (req, res) => {
-  // Assuming you have stored the correct password in an environment variable
   const correctPassword = process.env.PASSWORD;
   const { password } = req.body;
   
@@ -77,13 +76,55 @@ app.post('/upload', (req, res) => {
   });
 
   const processVideoWithLogo = () => {
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFont}',overlay=W-w-10:H-h-10" "${outputPath}"`;
+    const fontMapping = {
+      'Arial-Bold': 'Arial-Bold.ttf',
+      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+      'Tungsten-Bold': 'Tungsten-Bold.ttf'
+    };
+
+    const selectedFontFile = fontMapping[selectedFont];
+
+    if (!selectedFontFile) {
+      return res.status(400).send('Selected font is not supported.');
+    }
+
+    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+    const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+      return res.status(400).send('Selected subtitle format is not supported.');
+    }
+
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:H-h-10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
     executeFfmpeg(ffmpegCommand);
   };
 
   const processVideoWithoutLogo = () => {
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFont}'" "${outputPath}"`;
+    const fontMapping = {
+      'Arial-Bold': 'Arial-Bold.ttf',
+      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+      'Tungsten-Bold': 'Tungsten-Bold.ttf'
+    };
+
+    const selectedFontFile = fontMapping[selectedFont];
+
+    if (!selectedFontFile) {
+      return res.status(400).send('Selected font is not supported.');
+    }
+
+    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+    const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+      return res.status(400).send('Selected subtitle format is not supported.');
+    }
+
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
     executeFfmpeg(ffmpegCommand);
   };
