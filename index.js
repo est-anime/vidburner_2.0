@@ -41,11 +41,13 @@ app.post('/upload', (req, res) => {
   const selectedFont = req.body.font || 'Arial-Bold';
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
+  const logoFile = req.files.logo;
 
   // Generate unique filenames for the uploaded files
   const uniqueId = crypto.randomBytes(16).toString('hex');
   const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
   const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
+  const logoPath = logoFile ? path.join(__dirname, `/uploads/logo_${uniqueId}.png`) : null;
   const outputPath = path.join(__dirname, '/uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
@@ -60,104 +62,107 @@ app.post('/upload', (req, res) => {
         return res.status(500).send('Error occurred while uploading the subtitles.');
       }
 
-      const fontMapping = {
-        'Arial-Bold': 'Arial-Bold.ttf',
-        'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-        'Tungsten-Bold': 'Tungsten-Bold.ttf'
-      };
-
-      const selectedFontFile = fontMapping[selectedFont];
-
-      if (!selectedFontFile) {
-        return res.status(400).send('Selected font is not supported.');
+      if (logoFile) {
+        logoFile.mv(logoPath, (err) => {
+          if (err) {
+            console.error(`Error: ${err.message}`);
+            return res.status(500).send('Error occurred while uploading the logo.');
+          }
+          processVideoWithLogo();
+        });
+      } else {
+        processVideoWithoutLogo();
       }
-
-      const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
-
-      const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-      const acceptedSubtitleFormats = ['.srt', '.ass'];
-
-      if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-        return res.status(400).send('Selected subtitle format is not supported.');
-      }
-
-      const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
-
-      const ffmpegProcess = exec(ffmpegCommand);
-
-      let totalFrames = 0;
-      let processedFrames = 0;
-      readline.createInterface({ input: ffmpegProcess.stderr })
-        .on('line', (line) => {
-          if (line.includes('frame=')) {
-            const match = line.match(/frame=\s*(\d+)/);
-            if (match && match[1]) {
-              processedFrames = parseInt(match[1]);
-            }
-          }
-          if (line.includes('fps=')) {
-            const match = line.match(/fps=\s*([\d.]+)/);
-            if (match && match[1]) {
-              totalFrames = parseInt(match[1]);
-            }
-          }
-          if (totalFrames > 0 && processedFrames > 0) {
-            const progressPercent = (processedFrames / totalFrames) * 100;
-            res.write(`data: ${progressPercent}\n\n`);
-          }
-        });
-
-      ffmpegProcess.on('error', (error) => {
-        console.error(`Error: ${error.message}`);
-        return res.status(500).send('Error occurred during video processing.');
-      });
-
-      ffmpegProcess.on('exit', () => {
-        res.write('data: 100\n\n');
-        res.end();
-
-        // Construct the download link
-        const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
-
-        // Send an email with the download link
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false, // true for 465, false for other ports
-          auth: {
-            user: process.env.Email,
-            pass: process.env.APP_KEY,
-          },
-        });
-
-        const mailOptions = {
-          from: process.env.Email,
-          to: userEmail,
-          subject: 'Video Encoding Completed',
-          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error(`Email sending error: ${error}`);
-          } else {
-            console.log(`Email sent: ${info.response}`);
-          }
-        });
-
-        // Delete the processed video after 24 hours
-        setTimeout(() => {
-          fs.unlink(outputPath, (err) => {
-            if (err) {
-              console.error(`Error deleting file: ${err}`);
-            } else {
-              console.log('Processed video deleted successfully after 24 hours.');
-            }
-          });
-        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
-      });
     });
   });
+
+  const processVideoWithLogo = () => {
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFont}',overlay=W-w-10:H-h-10" "${outputPath}"`;
+
+    executeFfmpeg(ffmpegCommand);
+  };
+
+  const processVideoWithoutLogo = () => {
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFont}'" "${outputPath}"`;
+
+    executeFfmpeg(ffmpegCommand);
+  };
+
+  const executeFfmpeg = (command) => {
+    const ffmpegProcess = exec(command);
+
+    let totalFrames = 0;
+    let processedFrames = 0;
+    readline.createInterface({ input: ffmpegProcess.stderr })
+      .on('line', (line) => {
+        if (line.includes('frame=')) {
+          const match = line.match(/frame=\s*(\d+)/);
+          if (match && match[1]) {
+            processedFrames = parseInt(match[1]);
+          }
+        }
+        if (line.includes('fps=')) {
+          const match = line.match(/fps=\s*([\d.]+)/);
+          if (match && match[1]) {
+            totalFrames = parseInt(match[1]);
+          }
+        }
+        if (totalFrames > 0 && processedFrames > 0) {
+          const progressPercent = (processedFrames / totalFrames) * 100;
+          res.write(`data: ${progressPercent}\n\n`);
+        }
+      });
+
+    ffmpegProcess.on('error', (error) => {
+      console.error(`Error: ${error.message}`);
+      return res.status(500).send('Error occurred during video processing.');
+    });
+
+    ffmpegProcess.on('exit', () => {
+      res.write('data: 100\n\n');
+      res.end();
+
+      // Construct the download link
+      const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
+
+      // Send an email with the download link
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.Email,
+          pass: process.env.APP_KEY,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.Email,
+        to: userEmail,
+        subject: 'Video Encoding Completed',
+        text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error(`Email sending error: ${error}`);
+        } else {
+          console.log(`Email sent: ${info.response}`);
+        }
+      });
+
+      // Delete the processed video after 24 hours
+      setTimeout(() => {
+        fs.unlink(outputPath, (err) => {
+          if (err) {
+            console.error(`Error deleting file: ${err}`);
+          } else {
+            console.log('Processed video deleted successfully after 24 hours.');
+          }
+        });
+      }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+    });
+  };
 });
 
 app.listen(port, '0.0.0.0', () => {
