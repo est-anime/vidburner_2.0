@@ -23,15 +23,36 @@ app.get('/', (req, res) => {
 });
 
 app.get('/home', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'home.html'));
+  const filePath = path.join(__dirname, 'public', 'home.html');
+  console.log(`Attempting to serve file: ${filePath}`);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error(`Error serving file ${filePath}:`, err);
+      res.status(404).send('Page not found');
+    }
+  });
 });
 
 app.get('/services', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'services.html'));
+  const filePath = path.join(__dirname, 'public', 'services.html');
+  console.log(`Attempting to serve file: ${filePath}`);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error(`Error serving file ${filePath}:`, err);
+      res.status(404).send('Page not found');
+    }
+  });
 });
 
 app.get('/contact', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'contact.html'));
+  const filePath = path.join(__dirname, 'public', 'contact.html');
+  console.log(`Attempting to serve file: ${filePath}`);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error(`Error serving file ${filePath}:`, err);
+      res.status(404).send('Page not found');
+    }
+  });
 });
 
 app.post('/upload', (req, res) => {
