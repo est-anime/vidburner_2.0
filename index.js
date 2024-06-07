@@ -19,7 +19,6 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Your existing routes
 app.get('/home', (req, res) => {
   res.sendFile(__dirname + '/public/home.html');
 });
@@ -32,17 +31,6 @@ app.get('/contact', (req, res) => {
   res.sendFile(__dirname + '/public/contact.html');
 });
 
-
-app.post('/check-password', (req, res) => {
-  const correctPassword = process.env.PASSWORD;
-  const { password } = req.body;
-  
-  if (password === correctPassword) {
-    res.json({ success: true });
-  } else {
-    res.json({ success: false });
-  }
-});
 
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
