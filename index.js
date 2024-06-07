@@ -19,6 +19,20 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+// Your existing routes
+app.get('/home', (req, res) => {
+  res.sendFile(__dirname + '/public/home.html');
+});
+
+app.get('/services', (req, res) => {
+  res.sendFile(__dirname + '/public/services.html');
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(__dirname + '/public/contact.html');
+});
+
+
 app.post('/check-password', (req, res) => {
   const correctPassword = process.env.PASSWORD;
   const { password } = req.body;
