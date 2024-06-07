@@ -19,6 +19,9 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/home', (req, res) => {
   res.sendFile(__dirname + '/public/home.html');
 });
