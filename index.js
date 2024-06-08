@@ -103,12 +103,11 @@ const processVideoWithLogo = () => {
     }
 
     // Log the command to be executed for debugging
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
-    console.log('Executing ffmpeg command:', ffmpegCommand);
+   const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles='${subtitlesPath}':force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
-    executeFfmpeg(ffmpegCommand);
-  };
-
+  executeFfmpeg(ffmpegCommand);
+};
+  
   const processVideoWithoutLogo = () => {
     const fontMapping = {
       'Arial-Bold': 'Arial-Bold.ttf',
