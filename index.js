@@ -79,41 +79,11 @@ app.post('/upload', (req, res) => {
     });
   });
 
-const processVideoWithLogo = () => {
-  const fontMapping = {
-    'Arial-Bold': 'Arial-Bold.ttf',
-    'Juventus Fans Bold': 'Juventus Fans Bold.ttf',
-    'Tungsten-Bold': 'Tungsten Bold.ttf',
-    'Helvetica-Bold': 'Helvetica Bold.ttf' // Updated name to match the screenshot
-  };
-
-    const selectedFontFile = fontMapping[selectedFont];
-
-    if (!selectedFontFile) {
-      return res.status(400).send('Selected font is not supported.');
-    }
-
-    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
-
-    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-    const acceptedSubtitleFormats = ['.srt', '.ass'];
-
-    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-      return res.status(400).send('Selected subtitle format is not supported.');
-    }
-
-    // Log the command to be executed for debugging
-   const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles='${subtitlesPath}':force_style='FontName=${fullFontPath}'" "${outputPath}"`;
-
-  executeFfmpeg(ffmpegCommand);
-};
-  
-  const processVideoWithoutLogo = () => {
+  const processVideoWithLogo = () => {
     const fontMapping = {
       'Arial-Bold': 'Arial-Bold.ttf',
-      'Juventus Fans Bold': 'Juventus Fans Bold.ttf',
-      'Tungsten-Bold': 'Tungsten Bold.ttf',
-      'Helvetica-Bold': 'Helvetica Bold.ttf' // Added Helvetica-Bold
+      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+      'Tungsten-Bold': 'Tungsten-Bold.ttf'
     };
 
     const selectedFontFile = fontMapping[selectedFont];
@@ -131,9 +101,34 @@ const processVideoWithLogo = () => {
       return res.status(400).send('Selected subtitle format is not supported.');
     }
 
-    // Log the command to be executed for debugging
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+
+    executeFfmpeg(ffmpegCommand);
+  };
+
+  const processVideoWithoutLogo = () => {
+    const fontMapping = {
+      'Arial-Bold': 'Arial-Bold.ttf',
+      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+      'Tungsten-Bold': 'Tungsten-Bold.ttf'
+    };
+
+    const selectedFontFile = fontMapping[selectedFont];
+
+    if (!selectedFontFile) {
+      return res.status(400).send('Selected font is not supported.');
+    }
+
+    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+    const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+      return res.status(400).send('Selected subtitle format is not supported.');
+    }
+
     const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
-    console.log('Executing ffmpeg command:', ffmpegCommand);
 
     executeFfmpeg(ffmpegCommand);
   };
