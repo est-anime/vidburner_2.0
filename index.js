@@ -83,7 +83,8 @@ app.post('/upload', (req, res) => {
     const fontMapping = {
       'Arial-Bold': 'Arial-Bold.ttf',
       'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-      'Tungsten-Bold': 'Tungsten-Bold.ttf'
+      'Tungsten-Bold': 'Tungsten-Bold.ttf',
+      'Helvetica-Bold': 'Helvetica-Bold.ttf' // Added Helvetica-Bold
     };
 
     const selectedFontFile = fontMapping[selectedFont];
@@ -110,7 +111,8 @@ app.post('/upload', (req, res) => {
     const fontMapping = {
       'Arial-Bold': 'Arial-Bold.ttf',
       'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-      'Tungsten-Bold': 'Tungsten-Bold.ttf'
+      'Tungsten-Bold': 'Tungsten-Bold.ttf',
+      'Helvetica-Bold': 'Helvetica-Bold.ttf' // Added Helvetica-Bold
     };
 
     const selectedFontFile = fontMapping[selectedFont];
