@@ -84,7 +84,7 @@ app.post('/upload', (req, res) => {
       'Arial-Bold': 'Arial-Bold.ttf',
       'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
       'Tungsten-Bold': 'Tungsten-Bold.ttf'
-      'Helvetica-Bold.ttf': 'Helvetica-Bold.ttf'
+      'Helvetica-Bold': 'Helvetica-Bold.ttf'
     };
 
     const selectedFontFile = fontMapping[selectedFont];
