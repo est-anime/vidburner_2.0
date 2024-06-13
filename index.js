@@ -23,6 +23,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.get('/translate', (req, res) => {
+  res.sendFile(path.join(__dirname, 'translate.html'));
+});
+
 app.get('/home', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
