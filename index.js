@@ -6,6 +6,7 @@ const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
+const translate = require('@vitalets/google-translate-api');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -209,6 +210,71 @@ app.post('/upload', (req, res) => {
     });
   };
 });
+
+// Endpoint for subtitle translation
+app.post('/translate-subtitles', (req, res) => {
+  if (!req.files || !req.files.subtitles) {
+    return res.status(400).send('Please upload a subtitles file.');
+  }
+
+  const subtitlesFile = req.files.subtitles;
+  const uniqueId = crypto.randomBytes(16).toString('hex');
+  const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
+  const translatedSubtitlesPath = path.join(__dirname, `/uploads/translated_${uniqueId}.srt`);
+
+  subtitlesFile.mv(subtitlesPath, async (err) => {
+    if (err) {
+      console.error(`Error: ${err.message}`);
+      return res.status(500).send('Error occurred while uploading the subtitles.');
+    }
+
+    try {
+      const subtitlesContent = fs.readFileSync(subtitlesPath, 'utf-8');
+      const translatedContent = await translateSubtitlesToHinglish(subtitlesContent);
+
+      fs.writeFileSync(translatedSubtitlesPath, translatedContent, 'utf-8');
+
+      res.json({
+        success: true,
+        downloadLink: `http://${req.hostname}/uploads/translated_${uniqueId}.srt`
+      });
+
+      // Delete the translated subtitles after 24 hours
+      setTimeout(() => {
+        fs.unlink(translatedSubtitlesPath, (err) => {
+          if (err) {
+            console.error(`Error deleting translated subtitles: ${err}`);
+          } else {
+            console.log('Translated subtitles deleted successfully after 24 hours.');
+          }
+        });
+      }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+    } catch (error) {
+      console.error(`Translation error: ${error.message}`);
+      res.status(500).send('Error occurred during translation.');
+    }
+  });
+});
+
+const translateSubtitlesToHinglish = async (content) => {
+  const lines = content.split('\n');
+  const translatedLines = [];
+
+  for (const line of lines) {
+    if (isSubtitleLine(line)) {
+      const translatedLine = await translate(line, { to: 'hi-Latn' });
+      translatedLines.push(translatedLine.text);
+    } else {
+      translatedLines.push(line);
+    }
+  }
+
+  return translatedLines.join('\n');
+};
+
+const isSubtitleLine = (line) => {
+  return !/^\d+$/.test(line) && !/^[\d:,--> ]+$/.test(line);
+};
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${port}`);
