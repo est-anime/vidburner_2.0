@@ -23,7 +23,7 @@
       const formData = new FormData();
       formData.append('subtitles', document.getElementById('subtitles').files[0]);
 
-      const response = await fetch('/translate-subtitles', {
+      const response = await fetch('/translate', {
         method: 'POST',
         body: formData
       });
