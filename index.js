@@ -216,7 +216,7 @@ app.post('/upload', (req, res) => {
 });
 
 // Endpoint for subtitle translation
-app.post('/translate-subtitles', (req, res) => {
+app.post('/translate', (req, res) => {
   if (!req.files || !req.files.subtitles) {
     return res.status(400).send('Please upload a subtitles file.');
   }
