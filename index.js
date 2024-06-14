@@ -229,10 +229,5 @@ app.post('/upload', authenticateToken, async (req, res) => {
   };
 });
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  sendResponse(res, 500, 'Something went wrong.');
-});
-
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${port}`);
