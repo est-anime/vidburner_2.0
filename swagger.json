@@ -1,0 +1,90 @@
+// swagger.json
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Video Processing API",
+    "version": "1.0.0",
+    "description": "API for video processing with subtitles and logos"
+  },
+  "host": "localhost:3000",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/upload": {
+      "post": {
+        "summary": "Upload a video for processing",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          {
+            "name": "video",
+            "in": "formData",
+            "description": "Video file to be processed",
+            "required": true,
+            "type": "file"
+          },
+          {
+            "name": "subtitles",
+            "in": "formData",
+            "description": "Subtitle file to be added",
+            "required": true,
+            "type": "file"
+          },
+          {
+            "name": "logo",
+            "in": "formData",
+            "description": "Optional logo file to be added",
+            "required": false,
+            "type": "file"
+          },
+          {
+            "name": "font",
+            "in": "formData",
+            "description": "Font to be used for subtitles",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "outputFileName",
+            "in": "formData",
+            "description": "Desired output file name",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "in": "formData",
+            "description": "Email address for notification",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Video processed successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean" },
+                "message": { "type": "string" },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "downloadLink": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  }
+}
