@@ -145,6 +145,15 @@
       background-color: var(--button-hover-bg-color);
     }
 
+    .buttons .next-btn {
+      background-color: var(--button-bg-color);
+      margin-top: 10px;
+    }
+
+    .buttons .next-btn:hover {
+      background-color: var(--button-hover-bg-color);
+    }
+
     .buttons .cancel-btn {
       background-color: var(--button-cancel-bg-color);
     }
@@ -152,49 +161,91 @@
     .buttons .cancel-btn:hover {
       background-color: var(--button-cancel-hover-bg-color);
     }
+
+    #fileInputContainer, #outputDetailsContainer {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Upload Video and Subtitles</h1>
+    
     <form id="uploadForm" enctype="multipart/form-data">
-      <div class="upload-area" id="uploadArea">
-        <input type="file" id="fileInput" multiple>
-        <p>Drag & drop or <span>choose file</span></p>
+      <div id="fileInputContainer">
+        <div class="upload-area" id="videoUploadArea">
+          <input type="file" id="videoInput" accept="video/*">
+          <p>Drag & drop or <span>choose video file</span></p>
+        </div>
+
+        <div class="upload-area" id="subtitleUploadArea">
+          <input type="file" id="subtitleInput" accept=".srt, .ass">
+          <p>Drag & drop or <span>choose subtitle file</span></p>
+        </div>
+
+        <div class="upload-area" id="logoUploadArea">
+          <input type="file" id="logoInput" accept="image/png">
+          <p>Drag & drop or <span>choose logo file</span></p>
+        </div>
+        
+        <ul class="file-list" id="fileList"></ul>
+        
+        <div class="buttons">
+          <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
+          <button type="button" class="next-btn" id="nextBtn">Next</button>
+        </div>
       </div>
-      <ul class="file-list" id="fileList"></ul>
-      <div class="buttons">
-        <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
-        <button type="submit" class="upload-btn">Upload</button>
+
+      <div id="outputDetailsContainer">
+        <label for="outputFileName">Output file name:</label>
+        <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required>
+
+        <label for="email">Enter your email to get the download link:</label>
+        <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
+
+        <div class="buttons">
+          <button type="button" class="cancel-btn" id="backBtn">Back</button>
+          <button type="submit" class="upload-btn">Upload</button>
+        </div>
       </div>
     </form>
 
     <script>
-      const fileInput = document.getElementById('fileInput');
+      const fileInputContainer = document.getElementById('fileInputContainer');
+      const outputDetailsContainer = document.getElementById('outputDetailsContainer');
+      const videoInput = document.getElementById('videoInput');
+      const subtitleInput = document.getElementById('subtitleInput');
+      const logoInput = document.getElementById('logoInput');
       const uploadArea = document.getElementById('uploadArea');
       const fileList = document.getElementById('fileList');
       const cancelBtn = document.getElementById('cancelBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const backBtn = document.getElementById('backBtn');
       const uploadForm = document.getElementById('uploadForm');
 
-      fileInput.addEventListener('change', handleFiles);
-      uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
+      document.addEventListener('DOMContentLoaded', () => {
+        fileInputContainer.style.display = 'block';
       });
 
-      uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-      });
-
-      uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-        handleFiles(e);
-      });
+      videoInput.addEventListener('change', handleFiles);
+      subtitleInput.addEventListener('change', handleFiles);
+      logoInput.addEventListener('change', handleFiles);
 
       cancelBtn.addEventListener('click', () => {
         fileList.innerHTML = '';
-        fileInput.value = '';
+        videoInput.value = '';
+        subtitleInput.value = '';
+        logoInput.value = '';
+      });
+
+      nextBtn.addEventListener('click', () => {
+        fileInputContainer.style.display = 'none';
+        outputDetailsContainer.style.display = 'block';
+      });
+
+      backBtn.addEventListener('click', () => {
+        outputDetailsContainer.style.display = 'none';
+        fileInputContainer.style.display = 'block';
       });
 
       uploadForm.addEventListener('submit', (e) => {
@@ -203,7 +254,7 @@
       });
 
       function handleFiles(e) {
-        const files = e.target.files || e.dataTransfer.files;
+        const files = e.target.files;
         for (const file of files) {
           const listItem = document.createElement('li');
           listItem.innerHTML = `
