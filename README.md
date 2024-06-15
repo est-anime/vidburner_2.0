@@ -32,13 +32,18 @@ VideoBurner is a web application that allows users to upload a video and a subti
    npm install
    ```
 
-3. **Set Up Environment Variables**
+3. **Install main Dependencies**
+   ```sh
+   apt install ffmpeg
+   ```
+   
+4. **Set Up Environment Variables**
    Create a `.env` file in the root directory and add your email service credentials:
    ```
    APP_KEY=your_email_service_app_key
    ```
 
-4. **Run the Application**
+5. **Run the Application**
    ```sh
    node index.js
    ```
