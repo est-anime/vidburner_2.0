@@ -13,6 +13,7 @@
       --input-border-color: #ccc;
       --button-hover-color: #4caf50;
       --button-bg-color: #007bff;
+      --button-gradient-bg: linear-gradient(135deg, #007bff, #0056b3);
       --font-family: 'Roboto', sans-serif;
       --progress-bar-bg: #333;
       --progress-bar-fill: var(--secondary-color);
@@ -58,25 +59,32 @@
       margin-bottom: 15px;
       background: rgba(255, 255, 255, 0.1);
       color: var(--text-color);
+      transition: all 0.3s ease;
     }
 
     input::placeholder {
       color: rgba(255, 255, 255, 0.6);
     }
 
+    select:hover, input[type="text"]:hover, input[type="file"]:hover, input[type="email"]:hover {
+      border-color: var(--secondary-color);
+    }
+
     button {
-      background-color: var(--button-bg-color);
+      background: var(--button-gradient-bg);
       color: var(--text-color);
       border: none;
       padding: 12px 20px;
       font-size: 1.1em;
       border-radius: 4px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
     button:hover {
       background-color: var(--button-hover-color);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
 
     .progress-container {
@@ -106,10 +114,12 @@
       padding: 10px 15px;
       cursor: pointer;
       transition: background-color 0.3s;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
     #downloadButton:hover {
       background-color: var(--button-hover-color);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
 
     @media only screen and (max-width: 600px) {
