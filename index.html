@@ -174,12 +174,12 @@
     <form id="uploadForm" enctype="multipart/form-data">
       <div id="fileInputContainer">
         <div class="upload-area" id="videoUploadArea">
-          <input type="file" id="videoInput" accept="video/*" required>
+          <input type="file" id="videoInput" accept="video/*">
           <p>Drag & drop or <span>choose video file</span></p>
         </div>
 
         <div class="upload-area" id="subtitleUploadArea">
-          <input type="file" id="subtitleInput" accept=".srt, .ass" required>
+          <input type="file" id="subtitleInput" accept=".srt, .ass">
           <p>Drag & drop or <span>choose subtitle file</span></p>
         </div>
 
@@ -216,6 +216,7 @@
       const videoInput = document.getElementById('videoInput');
       const subtitleInput = document.getElementById('subtitleInput');
       const logoInput = document.getElementById('logoInput');
+      const uploadArea = document.getElementById('uploadArea');
       const fileList = document.getElementById('fileList');
       const cancelBtn = document.getElementById('cancelBtn');
       const nextBtn = document.getElementById('nextBtn');
@@ -247,45 +248,35 @@
         fileInputContainer.style.display = 'block';
       });
 
-      function handleFiles(event) {
-        const files = event.target.files;
-        fileList.innerHTML = ''; // Clear previous files
+      uploadForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // Handle file upload
+      });
 
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const li = document.createElement('li');
-          li.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
-          fileList.appendChild(li);
+      function handleFiles(e) {
+        const files = e.target.files;
+        for (const file of files) {
+          const listItem = document.createElement('li');
+          listItem.innerHTML = `
+            <span>${file.name}</span>
+            <div class="progress">
+              <div class="progress-bar"></div>
+            </div>
+            <button type="button">x</button>
+          `;
+          fileList.appendChild(listItem);
+
+          const progressBar = listItem.querySelector('.progress-bar');
+          // Mock progress for demo
+          setTimeout(() => {
+            progressBar.style.width = '100%';
+          }, 1000);
+
+          listItem.querySelector('button').addEventListener('click', () => {
+            fileList.removeChild(listItem);
+          });
         }
       }
-
-      uploadForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-
-        const formData = new FormData();
-        formData.append('video', videoInput.files[0]);
-        formData.append('subtitle', subtitleInput.files[0]);
-        formData.append('logo', logoInput.files[0] || null); // Optional logo file
-        formData.append('outputFileName', document.getElementById('outputFileName').value);
-        formData.append('email', document.getElementById('email').value);
-
-        fetch('/upload', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert('Upload successful! Check your email for the download link.');
-          } else {
-            alert('Upload failed. Please try again.');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Upload failed. Please try again.');
-        });
-      });
     </script>
   </div>
 </body>
