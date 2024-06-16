@@ -7,7 +7,6 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
 const google = require('googleapis');
-const fetch = require('node-fetch');
 
 const app = express();
 const port = process.env.PORT || 3000;
