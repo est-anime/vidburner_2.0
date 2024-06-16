@@ -60,7 +60,7 @@ app.get('/google-auth-callback', async (req, res) => {
 });
 
 // Upload route (after successful authentication)
-app.get('/upload', (req, res) => {
+app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
@@ -106,13 +106,136 @@ app.get('/upload', (req, res) => {
   });
 
   const processVideoWithLogo = () => {
-    // Your existing code for processing videos with logo
-    // Make sure to replace placeholders with actual values
+    const fontMapping = {
+      'Arial-Bold': 'Arial-Bold.ttf',
+      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+      'Tungsten-Bold': 'Tungsten-Bold.ttf'
+    };
+
+    const selectedFontFile = fontMapping[selectedFont];
+
+    if (!selectedFontFile) {
+      return res.status(400).send('Selected font is not supported.');
+    }
+
+    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+    const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+      return res.status(400).send('Selected subtitle format is not supported.');
+    }
+
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+
+    executeFfmpeg(ffmpegCommand);
   };
 
   const processVideoWithoutLogo = () => {
-    // Your existing code for processing videos without logo
-    // Make sure to replace placeholders with actual values
+    const fontMapping = {
+      'Arial-Bold': 'Arial-Bold.ttf',
+      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+      'Tungsten-Bold': 'Tungsten-Bold.ttf'
+    };
+
+    const selectedFontFile = fontMapping[selectedFont];
+
+    if (!selectedFontFile) {
+      return res.status(400).send('Selected font is not supported.');
+    }
+
+    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+    const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+      return res.status(400).send('Selected subtitle format is not supported.');
+    }
+
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+
+    executeFfmpeg(ffmpegCommand);
+  };
+
+  const executeFfmpeg = (command) => {
+    const ffmpegProcess = exec(command);
+
+    let totalFrames = 0;
+    let processedFrames = 0;
+    readline.createInterface({ input: ffmpegProcess.stderr })
+      .on('line', (line) => {
+        if (line.includes('frame=')) {
+          const match = line.match(/frame=\s*(\d+)/);
+          if (match && match[1]) {
+            processedFrames = parseInt(match[1]);
+          }
+        }
+        if (line.includes('fps=')) {
+          const match = line.match(/fps=\s*([\d.]+)/);
+          if (match && match[1]) {
+            totalFrames = parseInt(match[1]);
+          }
+        }
+        if (totalFrames > 0 && processedFrames > 0) {
+          const progressPercent = (processedFrames / totalFrames) * 100;
+          res.write(`data: ${progressPercent}\n\n`);
+        }
+      });
+
+    ffmpegProcess.on('error', (error) => {
+      console.error(`Error: ${error.message}`);
+      return res.status(500).send('Error occurred during video processing.');
+    });
+
+    ffmpegProcess.on('exit', () => {
+      res.write('data: 100\n\n');
+      res.end();
+
+      // Construct the download link
+      const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
+
+      // Send an email with the download link
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.Email,
+          pass: process.env.APP_KEY,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.Email,
+        to: userEmail,
+        subject: 'Video Encoding Completed',
+        text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error(`Email sending error: ${error}`);
+        } else {
+          console.log(`Email sent: ${info.response}`);
+        }
+      });
+
+      // Upload encoded video to Google Drive
+      uploadEncodedVideoToDrive();
+      
+      // Delete the processed video after 24 hours
+      setTimeout(() => {
+        fs.unlink(outputPath, (err) => {
+          if (err) {
+            console.error(`Error deleting file: ${err}`);
+          } else {
+            console.log('Processed video deleted successfully after 24 hours.');
+          }
+        });
+      }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+    });
   };
 
   // Function to upload file to Google Drive
@@ -140,33 +263,14 @@ app.get('/upload', (req, res) => {
   // Upload processed video to Google Drive
   const uploadEncodedVideoToDrive = async () => {
     try {
-      const uploadedVideo = await uploadToDrive(outputPath, 'video/mp4');
-res.status(200).send('Video uploaded to Google Drive successfully.');
-} catch (error) {
-console.error('Error uploading video to Google Drive:', error);
-res.status(500).send('Error uploading video to Google Drive.');
-}
-};
-
-// Process video and upload to Google Drive
-const processVideoAndUploadToDrive = async () => {
-try {
-// Your existing code to process the video
-
-vbnet
-Copy code
-  // Upload processed video to Google Drive
-  await uploadEncodedVideoToDrive();
-} catch (error) {
-  console.error('Error processing video and uploading to Google Drive:', error);
-  res.status(500).send('Error processing video and uploading to Google Drive.');
-}
-};
-
-// Call the function to process the video and upload to Google Drive
-processVideoAndUploadToDrive();
+      await uploadToDrive(outputPath, 'video/mp4');
+      console.log('Encoded video uploaded to Google Drive.');
+    } catch (error) {
+      console.error('Error uploading encoded video to Google Drive:', error);
+    }
+  };
 });
 
 app.listen(port, '0.0.0.0', () => {
-console.log(Server running on http://0.0.0.0:${port});
+  console.log(`Server running on http://0.0.0.0:${port}`);
 });
