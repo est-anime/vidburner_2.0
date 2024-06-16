@@ -20,10 +20,30 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'home.html'));
+});
+
+app.get('/services', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'services.html'));
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'contact.html'));
+});
+
+app.post('/upload', (req, res) => {
+  if (!req.files || !req.files.video || !req.files.subtitles) {
+    return res.status(400).send('Please upload both video and subtitles.');
+    
 // Google OAuth2 credentials
-const clientId = 'YOUR_CLIENT_ID';
-const clientSecret = 'YOUR_CLIENT_SECRET';
-const redirectUri = 'YOUR_REDIRECT_URI'; // This should be set in your Google Cloud Console
+const clientId = '221219740178-q0vb3hvp2itbt6iurftargurh5rbipo0.apps.googleusercontent.com';
+const clientSecret = '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';
+const redirectUri = 'http://localhost:3000/auth/google/callback'; // This should be set in your Google Cloud Console
 
 // Create OAuth2 client
 const oAuth2Client = new OAuth2Client(clientId, clientSecret, redirectUri);
