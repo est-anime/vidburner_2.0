@@ -5,9 +5,7 @@ const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
-const crypto = require('crypto');
-const { google } = require('googleapis');
-const { OAuth2Client } = require('google-auth-library');
+const crypto = require('crypto'); // For generating unique filenames
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -36,50 +34,6 @@ app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'contact.html'));
 });
 
-app.post('/upload', (req, res) => {
-  if (!req.files || !req.files.video || !req.files.subtitles) {
-    return res.status(400).send('Please upload both video and subtitles.');
-    
-// Google OAuth2 credentials
-const clientId = '221219740178-q0vb3hvp2itbt6iurftargurh5rbipo0.apps.googleusercontent.com';
-const clientSecret = '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';
-const redirectUri = 'http://localhost:3000/auth/google/callback'; // This should be set in your Google Cloud Console
-
-// Create OAuth2 client
-const oAuth2Client = new OAuth2Client(clientId, clientSecret, redirectUri);
-
-// Generate Google OAuth2 authentication URL
-const authUrl = oAuth2Client.generateAuthUrl({
-  access_type: 'offline',
-  scope: ['https://www.googleapis.com/auth/drive']
-});
-
-// Google Drive API
-const drive = google.drive({
-  version: 'v3',
-  auth: oAuth2Client
-});
-
-// Google Sign-In route
-app.get('/google-login', (req, res) => {
-  res.redirect(authUrl);
-});
-
-// Google OAuth2 callback route
-app.get('/google-auth-callback', async (req, res) => {
-  const code = req.query.code;
-
-  try {
-    const { tokens } = await oAuth2Client.getToken(code);
-    oAuth2Client.setCredentials(tokens);
-    res.redirect('/upload');
-  } catch (error) {
-    console.error('Error authenticating with Google:', error);
-    res.status(500).send('Error authenticating with Google.');
-  }
-});
-
-// Upload route (after successful authentication)
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
@@ -242,9 +196,6 @@ app.post('/upload', (req, res) => {
         }
       });
 
-      // Upload encoded video to Google Drive
-      uploadEncodedVideoToDrive();
-      
       // Delete the processed video after 24 hours
       setTimeout(() => {
         fs.unlink(outputPath, (err) => {
@@ -256,38 +207,6 @@ app.post('/upload', (req, res) => {
         });
       }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
     });
-  };
-
-  // Function to upload file to Google Drive
-  const uploadToDrive = async (filePath, mimeType) => {
-    try {
-      const response = await drive.files.create({
-        requestBody: {
-          name: path.basename(filePath),
-          mimeType: mimeType
-        },
-        media: {
-          mimeType: mimeType,
-          body: fs.createReadStream(filePath)
-        }
-      });
-
-      console.log('File uploaded to Google Drive:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error uploading file to Google Drive:', error);
-      throw error;
-    }
-  };
-
-  // Upload processed video to Google Drive
-  const uploadEncodedVideoToDrive = async () => {
-    try {
-      await uploadToDrive(outputPath, 'video/mp4');
-      console.log('Encoded video uploaded to Google Drive.');
-    } catch (error) {
-      console.error('Error uploading encoded video to Google Drive:', error);
-    }
   };
 });
 
