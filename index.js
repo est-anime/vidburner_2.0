@@ -9,7 +9,7 @@ const crypto = require('crypto'); // For generating unique filenames
 const google = require('googleapis');
 
 const app = express();
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
 app.use(express.json());
