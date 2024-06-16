@@ -153,9 +153,6 @@
       <label for="email">Enter your email to get the download link:</label>
       <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
 
-      <label for="driveUpload">Upload to Google Drive:</label>
-      <input type="checkbox" id="driveUpload" name="driveUpload">
-
       <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
       <button type="submit">Upload</button>
     </form>
@@ -169,40 +166,33 @@
       <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
     </div>
 
+    <!-- Google Sign-In button -->
+    <div id="googleSignInButton"></div>
+
+    <script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
     <script>
-      const form = document.getElementById('uploadForm');
-      const progressBar = document.getElementById('progressBar');
-      const downloadSection = document.getElementById('downloadSection');
-      const downloadButton = document.getElementById('downloadButton');
-
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/upload');
-        xhr.upload.addEventListener('progress', (event) => {
-          const percent = (event.loaded / event.total) * 100;
-          progressBar.style.width = percent + '%';
+      function renderButton() {
+        gapi.signin2.render('googleSignInButton', {
+          'scope': 'https://www.googleapis.com/auth/drive.file',
+          'width': 200,
+          'height': 50,
+          'longtitle': true,
+          'theme': 'dark',
+          'onsuccess': onSignIn,
+          'onfailure': onSignInFailure
         });
+      }
 
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-              console.log('Upload completed!');
-              downloadSection.style.display = 'block';
-              const downloadLink = xhr.responseText;
-              downloadButton.addEventListener('click', () => {
-                window.location.href = downloadLink;
-              });
-            } else {
-              console.error('Upload failed!');
-            }
-          }
-        };
+      function onSignIn(googleUser) {
+        const profile = googleUser.getBasicProfile();
+        console.log('Logged in as: ' + profile.getName());
+        console.log('Email: ' + profile.getEmail());
+        // Store necessary user data or trigger further actions
+      }
 
-        xhr.send(formData);
-      });
+      function onSignInFailure(error) {
+        console.error('Google Sign-In failed:', error);
+      }
     </script>
   </div>
 </body>
