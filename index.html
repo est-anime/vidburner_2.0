@@ -8,16 +8,14 @@
     :root {
       --primary-color: #007bff;
       --secondary-color: #64ffda;
-      --background-color: #f8f9fa;
-      --text-color: #333;
+      --background-color: #121212;
+      --text-color: #ffffff;
       --input-border-color: #ccc;
+      --button-hover-color: #4caf50;
       --button-bg-color: #007bff;
-      --button-hover-bg-color: #0056b3;
-      --button-cancel-bg-color: #6c757d;
-      --button-cancel-hover-bg-color: #5a6268;
-      --progress-bar-bg: #e9ecef;
-      --progress-bar-fill: var(--primary-color);
       --font-family: 'Roboto', sans-serif;
+      --progress-bar-bg: #333;
+      --progress-bar-fill: var(--secondary-color);
     }
 
     body {
@@ -26,257 +24,182 @@
       font-family: var(--font-family);
       margin: 0;
       padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
     }
     
     .container {
-      width: 400px;
-      background: #fff;
+      max-width: 800px;
+      margin: 0 auto;
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       text-align: center;
     }
 
     h1 {
-      font-size: 1.5em;
+      font-size: 2.5em;
       margin-bottom: 20px;
     }
 
-    .upload-area {
-      border: 2px dashed var(--input-border-color);
-      border-radius: 8px;
-      padding: 20px;
-      cursor: pointer;
-      margin-bottom: 15px;
-      position: relative;
-    }
-
-    .upload-area input {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .upload-area p {
-      margin: 0;
-      font-size: 1em;
-      color: var(--input-border-color);
-    }
-
-    .file-list {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 15px 0;
+    form {
+      margin-top: 20px;
       text-align: left;
     }
 
-    .file-list li {
-      padding: 10px;
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    label {
+      display: block;
+      font-size: 1.1em;
+      margin-bottom: 5px;
     }
 
-    .file-list li .progress {
-      width: 60%;
-      height: 5px;
-      background: var(--progress-bar-bg);
+    select, input[type="text"], input[type="file"], input[type="email"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1em;
+      border: 1px solid var(--input-border-color);
       border-radius: 4px;
+      margin-bottom: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    button {
+      background-color: var(--button-bg-color);
+      color: var(--text-color);
+      border: none;
+      padding: 12px 20px;
+      font-size: 1.1em;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: var(--button-hover-color);
+    }
+
+    .progress-container {
+      width: 100%;
+      background-color: var(--progress-bar-bg);
+      border-radius: 8px;
       overflow: hidden;
-      margin-left: 10px;
+      margin-top: 15px;
     }
 
-    .file-list li .progress .progress-bar {
-      height: 100%;
+    .progress-bar {
+      height: 20px;
       width: 0;
-      background: var(--progress-bar-fill);
+      background-color: var(--progress-bar-fill);
       transition: width 0.4s ease;
     }
 
-    .file-list li span {
-      flex-grow: 1;
-      margin-left: 10px;
+    #downloadSection {
+      margin-top: 20px;
+      display: none;
     }
 
-    .file-list li button {
-      background: none;
+    #downloadButton {
+      background-color: var(--secondary-color);
+      color: var(--background-color);
       border: none;
-      cursor: pointer;
-      color: var(--primary-color);
-      font-size: 1em;
-    }
-
-    .file-list li button:hover {
-      text-decoration: underline;
-    }
-
-    .buttons {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .buttons button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      font-size: 1em;
+      padding: 10px 15px;
       cursor: pointer;
       transition: background-color 0.3s;
-      color: #fff;
     }
 
-    .buttons .upload-btn {
-      background-color: var(--button-bg-color);
+    #downloadButton:hover {
+      background-color: var(--button-hover-color);
     }
 
-    .buttons .upload-btn:hover {
-      background-color: var(--button-hover-bg-color);
-    }
+    @media only screen and (max-width: 600px) {
+      .container {
+        width: 90%;
+      }
 
-    .buttons .next-btn {
-      background-color: var(--button-bg-color);
-      margin-top: 10px;
-    }
+      label, input, select {
+        font-size: 0.9em;
+      }
 
-    .buttons .next-btn:hover {
-      background-color: var(--button-hover-bg-color);
-    }
-
-    .buttons .cancel-btn {
-      background-color: var(--button-cancel-bg-color);
-    }
-
-    .buttons .cancel-btn:hover {
-      background-color: var(--button-cancel-hover-bg-color);
-    }
-
-    #fileInputContainer, #outputDetailsContainer {
-      display: none;
+      button {
+        font-size: 1em;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Upload Video and Subtitles</h1>
-    
     <form id="uploadForm" enctype="multipart/form-data">
-      <div id="fileInputContainer">
-        <div class="upload-area" id="videoUploadArea">
-          <input type="file" id="videoInput" accept="video/*">
-          <p>Drag & drop or <span>choose video file</span></p>
-        </div>
+      <label for="video">Select video (MP4 or MKV):</label>
+      <input type="file" id="video" name="video" accept="video/*" required>
 
-        <div class="upload-area" id="subtitleUploadArea">
-          <input type="file" id="subtitleInput" accept=".srt, .ass">
-          <p>Drag & drop or <span>choose subtitle file</span></p>
-        </div>
+      <label for="subtitles">Select subtitles file (SRT, ASS):</label>
+      <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required>
 
-        <div class="upload-area" id="logoUploadArea">
-          <input type="file" id="logoInput" accept="image/png">
-          <p>Drag & drop or <span>choose logo file</span></p>
-        </div>
-        
-        <ul class="file-list" id="fileList"></ul>
-        
-        <div class="buttons">
-          <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
-          <button type="button" class="next-btn" id="nextBtn">Next</button>
-        </div>
-      </div>
+      <label for="logo">Select logo (PNG):</label>
+      <input type="file" id="logo" name="logo" accept="image/png">
 
-      <div id="outputDetailsContainer">
-        <label for="outputFileName">Output file name:</label>
-        <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required>
+      <label for="font">Select subtitle font:</label>
+      <select id="font" name="font">
+        <option value="Arial-Bold">Arial Bold</option>
+        <option value="Juventus Fans Bold">Juventus Fans Bold</option>
+        <option value="Tungsten-Bold">Tungsten-Bold</option>
+      </select>
 
-        <label for="email">Enter your email to get the download link:</label>
-        <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
+      <label for="outputFileName">Output file name:</label>
+      <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required>
 
-        <div class="buttons">
-          <button type="button" class="cancel-btn" id="backBtn">Back</button>
-          <button type="submit" class="upload-btn">Upload</button>
-        </div>
-      </div>
+      <label for="email">Enter your email to get the download link:</label>
+      <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
+
+      <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
+      <button type="submit">Upload</button>
     </form>
 
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div id="downloadSection">
+      <h2>Video Encoding Successful!</h2>
+      <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
+    </div>
+
     <script>
-      const fileInputContainer = document.getElementById('fileInputContainer');
-      const outputDetailsContainer = document.getElementById('outputDetailsContainer');
-      const videoInput = document.getElementById('videoInput');
-      const subtitleInput = document.getElementById('subtitleInput');
-      const logoInput = document.getElementById('logoInput');
-      const uploadArea = document.getElementById('uploadArea');
-      const fileList = document.getElementById('fileList');
-      const cancelBtn = document.getElementById('cancelBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      const backBtn = document.getElementById('backBtn');
-      const uploadForm = document.getElementById('uploadForm');
+      const form = document.getElementById('uploadForm');
+      const progressBar = document.getElementById('progressBar');
+      const downloadSection = document.getElementById('downloadSection');
+      const downloadButton = document.getElementById('downloadButton');
 
-      document.addEventListener('DOMContentLoaded', () => {
-        fileInputContainer.style.display = 'block';
-      });
-
-      videoInput.addEventListener('change', handleFiles);
-      subtitleInput.addEventListener('change', handleFiles);
-      logoInput.addEventListener('change', handleFiles);
-
-      cancelBtn.addEventListener('click', () => {
-        fileList.innerHTML = '';
-        videoInput.value = '';
-        subtitleInput.value = '';
-        logoInput.value = '';
-      });
-
-      nextBtn.addEventListener('click', () => {
-        fileInputContainer.style.display = 'none';
-        outputDetailsContainer.style.display = 'block';
-      });
-
-      backBtn.addEventListener('click', () => {
-        outputDetailsContainer.style.display = 'none';
-        fileInputContainer.style.display = 'block';
-      });
-
-      uploadForm.addEventListener('submit', (e) => {
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
-        // Handle file upload
+        const formData = new FormData(form);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload');
+        xhr.upload.addEventListener('progress', (event) => {
+          const percent = (event.loaded / event.total) * 100;
+          progressBar.style.width = percent + '%';
+        });
+
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+              console.log('Upload completed!');
+              downloadSection.style.display = 'block';
+              const downloadLink = xhr.responseText;
+              downloadButton.addEventListener('click', () => {
+                window.location.href = downloadLink;
+              });
+            } else {
+              console.error('Upload failed!');
+            }
+          }
+        };
+
+        xhr.send(formData);
       });
-
-      function handleFiles(e) {
-        const files = e.target.files;
-        for (const file of files) {
-          const listItem = document.createElement('li');
-          listItem.innerHTML = `
-            <span>${file.name}</span>
-            <div class="progress">
-              <div class="progress-bar"></div>
-            </div>
-            <button type="button">x</button>
-          `;
-          fileList.appendChild(listItem);
-
-          const progressBar = listItem.querySelector('.progress-bar');
-          // Mock progress for demo
-          setTimeout(() => {
-            progressBar.style.width = '100%';
-          }, 1000);
-
-          listItem.querySelector('button').addEventListener('click', () => {
-            fileList.removeChild(listItem);
-          });
-        }
-      }
     </script>
   </div>
 </body>
