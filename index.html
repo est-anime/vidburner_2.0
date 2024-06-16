@@ -26,7 +26,7 @@
       padding: 0;
     }
     
-    .container {
+   .container {
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
@@ -79,7 +79,7 @@
       background-color: var(--button-hover-color);
     }
 
-    .progress-container {
+   .progress-container {
       width: 100%;
       background-color: var(--progress-bar-bg);
       border-radius: 8px;
@@ -87,7 +87,7 @@
       margin-top: 15px;
     }
 
-    .progress-bar {
+   .progress-bar {
       height: 20px;
       width: 0;
       background-color: var(--progress-bar-fill);
@@ -113,7 +113,7 @@
     }
 
     @media only screen and (max-width: 600px) {
-      .container {
+     .container {
         width: 90%;
       }
 
@@ -135,7 +135,7 @@
       <input type="file" id="video" name="video" accept="video/*" required>
 
       <label for="subtitles">Select subtitles file (SRT, ASS):</label>
-      <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required>
+      <input type="file" id="subtitles" name="subtitles" accept=".srt,.ass" required>
 
       <label for="logo">Select logo (PNG):</label>
       <input type="file" id="logo" name="logo" accept="image/png">
@@ -144,63 +144,115 @@
       <select id="font" name="font">
         <option value="Arial-Bold">Arial Bold</option>
         <option value="Juventus Fans Bold">Juventus Fans Bold</option>
-        <option value="Tungsten-Bold">Tungsten-Bold</option>
+        <option value="Tungsten-Bold">Tungsten Bold</option>
       </select>
 
       <label for="outputFileName">Output file name:</label>
-      <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required>
+      <input type="text" id="outputFileName" name="outputFileName" value="output.mp4">
 
-      <label for="email">Enter your email to get the download link:</label>
-      <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
-
-      <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
-      <button type="submit">Upload</button>
+      <label for="email">Your email:</label>
+      <div id="googleSignInButton"></div>
     </form>
 
-    <div class="progress-container">
-      <div class="progress-bar" id="progressBar"></div>
+    <div id="progressContainer" class="progress-container">
+      <div id="progressBar" class="progress-bar"></div>
     </div>
 
     <div id="downloadSection">
-      <h2>Video Encoding Successful!</h2>
-      <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
+      <p>Your video is ready for download:</p>
+      <button id="downloadButton">Download</button>
     </div>
-
-    <script>
-      const form = document.getElementById('uploadForm');
-      const progressBar = document.getElementById('progressBar');
-      const downloadSection = document.getElementById('downloadSection');
-      const downloadButton = document.getElementById('downloadButton');
-
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/upload');
-        xhr.upload.addEventListener('progress', (event) => {
-          const percent = (event.loaded / event.total) * 100;
-          progressBar.style.width = percent + '%';
-        });
-
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-              console.log('Upload completed!');
-              downloadSection.style.display = 'block';
-              const downloadLink = xhr.responseText;
-              downloadButton.addEventListener('click', () => {
-                window.location.href = downloadLink;
-              });
-            } else {
-              console.error('Upload failed!');
-            }
-          }
-        };
-
-        xhr.send(formData);
-      });
-    </script>
   </div>
+
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <meta name="google-signin-client_id" content="YOUR_CLIENT_ID">
+  <script>
+    function onSignIn(googleUser) {
+      const id_token = googleUser.getAuthResponse().id_token;
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/signin', true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          if (response.success) {
+            document.getElementById('email').value = response.email;
+            document.getElementById('uploadForm').submit();
+          } else {
+            alert('Error: ' + response.message);
+          }
+        } else {
+          alert('Error: ' + xhr.statusText);
+        }
+      };
+      xhr.send('id_token=' + id_token);
+    }
+
+    function onLoad() {
+      gapi.load('auth2', () => {
+        gapi.auth2.init({
+          client_id: '221219740178-q0vb3hvp2itbt6iurftargurh5rbipo0.apps.googleusercontent.com',
+          cookiepolicy: 'single_host_origin',
+        });
+      });
+
+      const googleSignInButton = document.getElementById('googleSignInButton');
+      googleSignInButton.innerHTML = `
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+      `;
+    }
+
+    window.onload = onLoad;
+  </script>
+
+  <script>
+    const uploadForm = document.getElementById('uploadForm');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const downloadSection = document.getElementById('downloadSection');
+    const downloadButton = document.getElementById('downloadButton');
+
+    uploadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(uploadForm);
+      const videoFile = formData.get('video');
+      const subtitlesFile = formData.get('subtitles');
+      const logoFile = formData.get('logo');
+      const font = formData.get('font');
+      const outputFileName = formData.get('outputFileName');
+      const email = document.getElementById('email').value;
+
+      if (!videoFile || !subtitlesFile) {
+        alert('Please select both video and subtitles files.');
+        return;
+      }
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/upload', true);
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = (event.loaded / event.total) * 100;
+          progressBar.style.width = `${percent}%`;
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          if (response.success) {
+            downloadSection.style.display = 'block';
+            downloadButton.addEventListener('click', () => {
+              window.location.href = response.downloadUrl;
+            });
+          } else {
+            alert('Error: ' + response.message);
+          }
+        } else {
+alert('Error: ' xhr.statusText);
+        }
+      };
+      xhr.send(formData);
+    });
+  </script>
 </body>
 </html>
