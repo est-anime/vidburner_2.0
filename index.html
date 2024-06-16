@@ -147,22 +147,24 @@
         <option value="Tungsten-Bold">Tungsten Bold</option>
       </select>
 
-      <label for="outputFileName">Output file name:</label>
-      <input type="text" id="outputFileName" name="outputFileName" value="output.mp4">
+       <label for="outputFileName">Output file name:</label>
+      <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required>
 
-      <label for="email">Your email:</label>
-      <div id="googleSignInButton"></div>
+      <label for="email">Enter your email to get the download link:</label>
+      <input type="email" id="email" name="email" placeholder="your_email@example.com" required>
+
+      <h3>Timing takes:<br>10 min = 13 min<br>15 min = 20 min<br>24 min = 30 min</h3>
+      <button type="submit">Upload</button>
     </form>
 
-    <div id="progressContainer" class="progress-container">
-      <div id="progressBar" class="progress-bar"></div>
+     <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
     </div>
 
     <div id="downloadSection">
-      <p>Your video is ready for download:</p>
-      <button id="downloadButton">Download</button>
+      <h2>Video Encoding Successful!</h2>
+      <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
     </div>
-  </div>
 
   <script src="https://apis.google.com/js/platform.js" async defer></script>
   <meta name="google-signin-client_id" content="YOUR_CLIENT_ID">
