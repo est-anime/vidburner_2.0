@@ -1,13 +1,12 @@
 const express = require('express');
+const { google } = require('googleapis');
 const fileUpload = require('express-fileupload');
 const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
-const crypto = require('crypto'); // For generating unique filenames
-const { google } = require('googleapis');
-const OAuth2 = google.auth.OAuth2;
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -15,40 +14,58 @@ const port = process.env.PORT || 3000;
 app.use(fileUpload());
 app.use(express.json());
 
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/home', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'home.html'));
-});
-
-app.get('/services', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'services.html'));
-});
-
-app.get('/contact', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'contact.html'));
-});
-
-// Google Drive API setup
-const oauth2Client = new OAuth2(
+// Set up Google OAuth2 credentials
+const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  'https://developers.google.com/oauthplayground' // or your redirect URL
+  'http://localhost:3000/auth/google/callback' // Redirect URI
 );
 
-oauth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+// Redirect user to Google Sign-In page
+app.get('/auth/google', (req, res) => {
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['https://www.googleapis.com/auth/drive'],
+  });
+  res.redirect(authUrl);
 });
 
-const drive = google.drive({ version: 'v3', auth: oauth2Client });
+// Handle callback after Google Sign-In
+app.get('/auth/google/callback', async (req, res) => {
+  const code = req.query.code;
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
 
-app.post('/upload', (req, res) => {
+    // Create a folder named "vidburner" in the user's Google Drive
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+    const folderMetadata = {
+      name: 'vidburner',
+      mimeType: 'application/vnd.google-apps.folder',
+    };
+    const response = await drive.files.create({
+      resource: folderMetadata,
+      fields: 'id',
+    });
+
+    // Save user's credentials and folder ID for future use
+    // For production, you may want to securely store these credentials
+    const userCredentials = {
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      folderId: response.data.id,
+    };
+    // Save userCredentials to a database or secure storage
+
+    res.send('Google Sign-In successful. You can now upload videos to Google Drive.');
+  } catch (error) {
+    console.error('Error during Google Sign-In:', error);
+    res.status(500).send('Error during Google Sign-In. Please try again.');
+  }
+});
+
+// Handle file upload
+app.post('/upload', async (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
@@ -59,9 +76,8 @@ app.post('/upload', (req, res) => {
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
   const logoFile = req.files.logo;
-  const uploadToDrive = req.body.uploadToDrive === 'true';
+  const uploadToDrive = req.body.driveUpload === 'on';
 
-  // Generate unique filenames for the uploaded files
   const uniqueId = crypto.randomBytes(16).toString('hex');
   const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
   const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
@@ -178,31 +194,12 @@ app.post('/upload', (req, res) => {
       return res.status(500).send('Error occurred during video processing.');
     });
 
-    ffmpegProcess.on('exit', async () => {
+    ffmpegProcess.on('exit', () => {
       res.write('data: 100\n\n');
       res.end();
 
       // Construct the download link
       const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
-
-      // Upload to Google Drive
-      if (uploadToDrive) {
-        try {
-          const response = await drive.files.create({
-            requestBody: {
-              name: outputFileName,
-              mimeType: 'video/mp4',
-            },
-            media: {
-              mimeType: 'video/mp4',
-              body: fs.createReadStream(outputPath),
-            },
-          });
-          console.log('File uploaded to Google Drive', response.data);
-        } catch (error) {
-          console.error('Error uploading to Google Drive:', error);
-        }
-      }
 
       // Send an email with the download link
       const transporter = nodemailer.createTransport({
@@ -240,8 +237,68 @@ app.post('/upload', (req, res) => {
           }
         });
       }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+      // Upload to Google Drive if enabled
+      if (uploadToDrive) {
+        uploadToGoogleDrive(outputPath, outputFileName, userEmail);
+      }
     });
   };
+
+  const uploadToGoogleDrive = async (filePath, fileName, userEmail) => {
+    try {
+      const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+      // Create file metadata
+      const fileMetadata = {
+        name: fileName,
+        parents: [userCredentials.folderId], // Upload to 'vidburner' folder
+      };
+
+      // Create media
+      const media = {
+        mimeType: 'video/mp4',
+        body: fs.createReadStream(filePath),
+      };
+
+      // Upload file to Google Drive
+      const response = await drive.files.create({
+        resource: fileMetadata,
+        media: media,
+        fields: 'id',
+      });
+
+      console.log('File uploaded to Google Drive. File ID:', response.data.id);
+
+      // Send email notification with Google Drive link
+      const downloadLink = `https://drive.google.com/file/d/${response.data.id}/view`;
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.Email,
+          pass: process.env.APP_KEY,
+        },
+      });
+      const mailOptions = {
+        from: process.env.Email,
+        to: userEmail,
+        subject: 'Video Uploaded to Google Drive',
+        text: `Your video has been uploaded to Google Drive. You can access it using the following link: ${downloadLink}`,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error(`Email sending error: ${error}`);
+        } else {
+          console.log(`Email sent: ${info.response}`);
+        }
+      });
+    } catch (error) {
+      console.error('Error uploading to Google Drive:', error);
+    }
+  };
+
 });
 
 app.listen(port, '0.0.0.0', () => {
