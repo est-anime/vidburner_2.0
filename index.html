@@ -112,6 +112,10 @@
       background-color: var(--button-hover-color);
     }
 
+    .g-signin2 {
+      margin-top: 20px;
+    }
+
     @media only screen and (max-width: 600px) {
       .container {
         width: 90%;
@@ -130,7 +134,8 @@
 <body>
   <div class="container">
     <h1>Upload Video and Subtitles</h1>
-    <form id="uploadForm" enctype="multipart/form-data">
+    <div id="googleSignInButton" class="g-signin2" data-onsuccess="onSignIn"></div>
+    <form id="uploadForm" enctype="multipart/form-data" style="display: none;">
       <label for="video">Select video (MP4 or MKV):</label>
       <input type="file" id="video" name="video" accept="video/*" required>
 
@@ -166,9 +171,6 @@
       <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
     </div>
 
-    <!-- Google Sign-In button -->
-    <div id="googleSignInButton"></div>
-
     <script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
     <script>
       function renderButton() {
@@ -187,6 +189,7 @@
         const profile = googleUser.getBasicProfile();
         console.log('Logged in as: ' + profile.getName());
         console.log('Email: ' + profile.getEmail());
+        document.getElementById('uploadForm').style.display = 'block';
         // Store necessary user data or trigger further actions
       }
 
