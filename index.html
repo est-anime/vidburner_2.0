@@ -26,7 +26,7 @@
       padding: 0;
     }
     
-   .container {
+    .container {
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
@@ -79,7 +79,7 @@
       background-color: var(--button-hover-color);
     }
 
-   .progress-container {
+    .progress-container {
       width: 100%;
       background-color: var(--progress-bar-bg);
       border-radius: 8px;
@@ -87,7 +87,7 @@
       margin-top: 15px;
     }
 
-   .progress-bar {
+    .progress-bar {
       height: 20px;
       width: 0;
       background-color: var(--progress-bar-fill);
@@ -113,7 +113,7 @@
     }
 
     @media only screen and (max-width: 600px) {
-     .container {
+      .container {
         width: 90%;
       }
 
@@ -147,7 +147,7 @@
         <option value="Tungsten-Bold">Tungsten Bold</option>
       </select>
 
-       <label for="outputFileName">Output file name:</label>
+      <label for="outputFileName">Output file name:</label>
       <input type="text" id="outputFileName" name="outputFileName" placeholder="output.mp4" required>
 
       <label for="email">Enter your email to get the download link:</label>
@@ -157,7 +157,7 @@
       <button type="submit">Upload</button>
     </form>
 
-     <div class="progress-container">
+    <div class="progress-container">
       <div class="progress-bar" id="progressBar"></div>
     </div>
 
@@ -166,11 +166,13 @@
       <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
     </div>
 
-  <script src="https://apis.google.com/js/platform.js" async defer></script>
-  <meta name="google-signin-client_id" content="221219740178-ucbj6j5fd5t3ne8b13kcc6ki17qn29eo.apps.googleusercontent.com">
+    <div id="googleSignInButton"></div>
+  </div>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    function onSignIn(googleUser) {
-      const id_token = googleUser.getAuthResponse().id_token;
+    function handleCredentialResponse(response) {
+      const id_token = response.credential;
       const xhr = new XMLHttpRequest();
       xhr.open('POST', '/signin', true);
       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -190,27 +192,22 @@
       xhr.send('id_token=' + id_token);
     }
 
-    function onLoad() {
-      gapi.load('auth2', () => {
-        gapi.auth2.init({
-          client_id: '221219740178-ucbj6j5fd5t3ne8b13kcc6ki17qn29eo.apps.googleusercontent.com',
-          cookiepolicy: 'single_host_origin',
-        });
+    window.onload = () => {
+      google.accounts.id.initialize({
+        client_id: '221219740178-ucbj6j5fd5t3ne8b13kcc6ki17qn29eo.apps.googleusercontent.com',
+        callback: handleCredentialResponse
       });
-
-     const googleSignInButton = document.getElementById('googleSignInButton');
-      if (googleSignInButton) {
-        googleSignInButton.innerHTML = '<div class="g-signin2" data-onsuccess="onSignIn"></div>';
-      }
-    }
-
-    window.onload = onLoad;
+      google.accounts.id.renderButton(
+        document.getElementById('googleSignInButton'),
+        { theme: 'outline', size: 'large' }
+      );
+    };
   </script>
 
   <script>
     const uploadForm = document.getElementById('uploadForm');
-    const progressContainer = document.getElementById('progressContainer');
-    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.querySelector('.progress-container');
+    const progressBar = document.querySelector('.progress-bar');
     const downloadSection = document.getElementById('downloadSection');
     const downloadButton = document.getElementById('downloadButton');
 
@@ -250,7 +247,7 @@
             alert('Error: ' + response.message);
           }
         } else {
-alert('Error: ' + xhr.statusText);
+          alert('Error: ' + xhr.statusText);
         }
       };
       xhr.send(formData);
