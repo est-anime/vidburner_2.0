@@ -198,10 +198,10 @@
         });
       });
 
-      const googleSignInButton = document.getElementById('googleSignInButton');
-      googleSignInButton.innerHTML = `
-        <div class="g-signin2" data-onsuccess="onSignIn"></div>
-      `;
+     const googleSignInButton = document.getElementById('googleSignInButton');
+      if (googleSignInButton) {
+        googleSignInButton.innerHTML = '<div class="g-signin2" data-onsuccess="onSignIn"></div>';
+      }
     }
 
     window.onload = onLoad;
