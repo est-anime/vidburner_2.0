@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>Videoburner - Burn Subtitle into Video Online</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">\
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -19,18 +19,36 @@
     }
 
     body {
-      background-color: var(--background-color);
-      color: var(--text-color);
-      font-family: var(--font-family);
-      margin: 0;
-      padding: 0;
+    font-family: Arial, sans-serif;
+    background: #000;
+    color: white;
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
     }
     
     .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      text-align: center;
+    background-color: rgba(51, 51, 51, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    animation: fadeIn 1s ease-in-out, float 6s ease-in-out infinite;
+    margin: 80px 0; /* To avoid overlap with header and footer */
+    width: 80%;
+    max-width: 600px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    border: 5px solid transparent;
+    border-image: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet, red);
+    border-image-slice: 1;
+    animation: borderGlow 3s linear infinite;
     }
 
     h1 {
@@ -39,22 +57,29 @@
     }
 
     form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       margin-top: 20px;
       text-align: left;
     }
 
     label {
-      display: block;
-      font-size: 1.1em;
-      margin-bottom: 5px;
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 14px;
+      text-align: center;
+      font-size: 16px; /* Increased font size for better readability */
+      margin-top: 10px; /* Increased margin for better separation */
     }
 
     select, input[type="text"], input[type="file"], input[type="email"] {
       width: 100%;
       padding: 12px;
-      font-size: 1em;
+      font-size: 16px;
       border: 1px solid var(--input-border-color);
-      border-radius: 4px;
+      border-radius: 5px;
+      margin-top: 5px;
       margin-bottom: 15px;
       background: rgba(255, 255, 255, 0.1);
       color: var(--text-color);
@@ -108,9 +133,32 @@
       transition: background-color 0.3s;
     }
 
+    .timing ul {
+    list-style-type: none;
+    padding: 0;
+    font-size: 16px; /* Increased font size for better readability */
+}
+
     #downloadButton:hover {
       background-color: var(--button-hover-color);
     }
+
+    @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Animated Rainbow Glow */
+@keyframes borderGlow {
+    0% { border-image-source: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet, red); }
+    50% { border-image-source: linear-gradient(45deg, violet, red, orange, yellow, green, blue, indigo, violet); }
+    100% { border-image-source: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet, red); }
+}
 
     @media only screen and (max-width: 600px) {
       .container {
