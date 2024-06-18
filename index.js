@@ -38,6 +38,15 @@ app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'contact.html'));
 });
 
+// Route to handle sign-in
+app.post('/signin', (req, res) => {
+  // Process the sign-in request here
+  const idToken = req.body.id_token;
+
+  // For now, let's just send a response indicating success
+  res.status(200).json({ success: true, message: 'Sign-in successful' });
+});
+
 app.post('/upload', (req, res) => {
   if (!req.files ||!req.files.video ||!req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
