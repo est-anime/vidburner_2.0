@@ -1,0 +1,175 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #000;
+    color: white;
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(60deg, rgba(0, 123, 255, 0.5) 25%, transparent 25%),
+                linear-gradient(60deg, transparent 75%, rgba(0, 123, 255, 0.5) 75%);
+    background-size: 100% 100%;
+    background-size: cover; /* Ensure background covers the entire screen */
+}
+
+header, footer {
+    width: 100%;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    left: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+}
+
+header {
+    top: 0;
+    animation: fadeInSlideDown 1s ease-out;
+}
+
+@keyframes fadeInSlideDown {
+    from { opacity: 0; transform: translateY(-100%); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+footer {
+    bottom: 0;
+}
+
+header h1, footer p {
+    margin: 0;
+}
+
+.container {
+    background-color: rgba(51, 51, 51, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    animation: fadeIn 1s ease-in-out, float 6s ease-in-out infinite;
+    margin: 80px 0; /* To avoid overlap with header and footer */
+    width: 80%;
+    max-width: 600px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    border: 5px solid transparent;
+    border-image: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet, red);
+    border-image-slice: 1;
+    animation: borderGlow 3s linear infinite;
+}
+
+h2 {
+    margin-bottom: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+label {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    font-size: 16px; /* Increased font size for better readability */
+    margin-top: 10px; /* Increased margin for better separation */
+}
+
+input, select, button {
+    margin-top: 5px;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    font-size: 16px;
+    width: 100%;
+    font-size: 16px;
+}
+
+button {
+    background-color: #007BFF;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    padding: 12px 20px; /* Increased padding for better clickability */
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.custom-file-input {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    width: 100%;
+    height: 50px;
+    margin-top: 10px;
+    border: 2px dashed #aaa;
+    border-radius: 5px;
+    text-align: center;
+    line-height: 50px;
+    color: #aaa;
+    cursor: pointer;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.custom-file-input input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.custom-file-input:hover {
+    border-color: #007BFF;
+    color: #007BFF;
+    height: 50px;
+    line-height: 50px;
+    margin-top: 15px; /* Increased margin for better separation */
+}
+
+.custom-file-input span {
+    display: inline-block;
+    width: 100%;
+    pointer-events: none;
+}
+
+.timing ul {
+    list-style-type: none;
+    padding: 0;
+    font-size: 16px; /* Increased font size for better readability */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Animated Rainbow Glow */
+@keyframes borderGlow {
+    0% { border-image-source: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet, red); }
+    50% { border-image-source: linear-gradient(45deg, violet, red, orange, yellow, green, blue, indigo, violet); }
+    100% { border-image-source: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet, red); }
+}
