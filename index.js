@@ -6,7 +6,7 @@ const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
-const google = require('googleapis');
+const { google } = require('googleapis');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/home', (req, res) => {
@@ -31,7 +31,7 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/services', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'ervices.html'));
+  res.sendFile(path.join(__dirname, 'public', 'services.html'));
 });
 
 app.get('/contact', (req, res) => {
@@ -39,7 +39,7 @@ app.get('/contact', (req, res) => {
 });
 
 app.post('/upload', (req, res) => {
-  if (!req.files ||!req.files.video ||!req.files.subtitles) {
+  if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
 
@@ -54,7 +54,7 @@ app.post('/upload', (req, res) => {
   const uniqueId = crypto.randomBytes(16).toString('hex');
   const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
   const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
-  const logoPath = logoFile? path.join(__dirname, `/uploads/logo_${uniqueId}.png`) : null;
+  const logoPath = logoFile ? path.join(__dirname, `/uploads/logo_${uniqueId}.png`) : null;
   const outputPath = path.join(__dirname, '/uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
@@ -126,9 +126,9 @@ app.post('/upload', (req, res) => {
     const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
     const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-    const acceptedSubtitleFormats = ['.srt', '.ass'];
+    const acceptedSubtitleFormats are ['.srt', '.ass'];
 
-    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+    if (!acceptedSubtitleFormats includes(subtitlesExtension)) {
       return res.status(400).send('Selected subtitle format is not supported.');
     }
 
@@ -240,7 +240,7 @@ const uploadVideoToGoogleDrive = (accessToken, folderId, outputPath) => {
     'parents': [folderId]
   };
 
-  fetch('https://www.googleapis.com/upload/drive/v3/files', {
+  fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
     method: 'POST',
     headers: headers,
     body: videoFile
