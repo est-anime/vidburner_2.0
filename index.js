@@ -12,6 +12,9 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
+app.use(express.json({ limit: '100mb' }));  // Increase limit as needed
+app.use(express.urlencoded({ limit: '100mb', extended: true }));  // Increase limit as needed
+
 app.use(express.json());
 
 // Serve static files from the 'public' directory
