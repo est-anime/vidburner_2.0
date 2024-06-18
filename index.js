@@ -115,8 +115,8 @@ app.post('/upload', (req, res) => {
       return res.status(400).send('Selected subtitle format is not supported.');
     }
 
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
-
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:fontfile='${fullFontPath}'" "${outputPath}"`;
+    
     executeFfmpeg(ffmpegCommand);
   };
 
@@ -142,8 +142,8 @@ app.post('/upload', (req, res) => {
       return res.status(400).send('Selected subtitle format is not supported.');
     }
 
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
-
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:fontfile='${fullFontPath}'" "${outputPath}"`;
+    
     executeFfmpeg(ffmpegCommand);
   };
 
@@ -223,18 +223,13 @@ const createVidburnerFolder = (accessToken, userEmail, outputPath) => {
     'mimeType': 'application/vnd.google-apps.folder'
   };
 
-  fetch('https://www.googleapis.com/drive/v3/files', {
-    method: 'POST',
-    headers: headers,
-    body: JSON.stringify(folderMetadata)
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log(`Folder created: ${data.name}`);
-    // Upload the encoded video to the "Vidburner" folder
-    uploadVideoToGoogleDrive(accessToken, data.id, outputPath);
-  })
-  .catch(error => console.error(`Error creating folder: ${error}`));
+  axios.post('https://www.googleapis.com/drive/v3/files', folderMetadata, { headers })
+    .then(response => {
+      console.log(`Folder created: ${response.data.name}`);
+      // Upload the encoded video to the "Vidburner" folder
+      uploadVideoToGoogleDrive(accessToken, response.data.id, outputPath);
+    })
+    .catch(error => console.error(`Error creating folder: ${error}`));
 };
 
 const uploadVideoToGoogleDrive = (accessToken, folderId, outputPath) => {
@@ -244,22 +239,18 @@ const uploadVideoToGoogleDrive = (accessToken, folderId, outputPath) => {
   };
 
   const videoFile = fs.readFileSync(outputPath);
-  const uploadMetadata = {
-    'name': 'output.mp4',
-    'mimeType': 'video/mp4',
-    'parents': [folderId]
+
+  const params = {
+    name: 'output.mp4',
+    mimeType: 'video/mp4',
+    parents: [folderId]
   };
 
-  fetch('https://www.googleapis.com/upload/drive/v3/files', {
-    method: 'POST',
-    headers: headers,
-    body: videoFile
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log(`Video uploaded: ${data.name}`);
-  })
-  .catch(error => console.error(`Error uploading video: ${error}`));
+  axios.post('https://www.googleapis.com/upload/drive/v3/files?uploadType=media', videoFile, { params, headers })
+    .then(response => {
+      console.log(`Video uploaded: ${response.data.name}`);
+    })
+    .catch(error => console.error(`Error uploading video: ${error}`));
 };
 
 app.listen(port, '0.0.0.0', () => {
