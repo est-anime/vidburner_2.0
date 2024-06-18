@@ -177,9 +177,9 @@ app.post('/upload', (req, res) => {
 const authenticateWithGoogleDrive = (userEmail, outputPath) => {
   const auth = new google.auth.GoogleAuth({
     // If you have a JSON key file, use this:
-    keyFile: 'root/vidburner_2.0/key/vidburner-f2c67008b3db.json',
+    keyFile: 'root/vidburner_2.0/key/vidburner-c6c5d2c5488f.json',
     // If you have a service account email, use this:
-    clientEmail: 'vidburner@vidburner.iam.gserviceaccount.com',
+    clientEmail: 'vid-363@vidburner.iam.gserviceaccount.com',
     scopes: ['https://www.googleapis.com/auth/drive']
   });
 
