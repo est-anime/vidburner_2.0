@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/burn', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'burn.html'));
+  res.sendFile(path.join(__dirname, 'service', 'burn.html'));
 });
 
 app.get('/', (req, res) => {
