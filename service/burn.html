@@ -135,7 +135,7 @@
       <input type="file" id="video" name="video" accept="video/*" required>
 
       <label for="subtitles">Select subtitles file (SRT, ASS):</label>
-      <input type="file" id="subtitles" name="subtitles" accept=".srt,.ass" required>
+      <input type="file" id="subtitles" name="subtitles" accept=".srt, .ass" required>
 
       <label for="logo">Select logo (PNG):</label>
       <input type="file" id="logo" name="logo" accept="image/png">
@@ -144,7 +144,7 @@
       <select id="font" name="font">
         <option value="Arial-Bold">Arial Bold</option>
         <option value="Juventus Fans Bold">Juventus Fans Bold</option>
-        <option value="Tungsten-Bold">Tungsten Bold</option>
+        <option value="Tungsten-Bold">Tungsten-Bold</option>
       </select>
 
       <label for="outputFileName">Output file name:</label>
@@ -166,92 +166,41 @@
       <button id="downloadButton">Download Processed Video (Check your email if the link is not working)</button>
     </div>
 
-    <div id="googleSignInButton"></div>
-  </div>
+    <script>
+      const form = document.getElementById('uploadForm');
+      const progressBar = document.getElementById('progressBar');
+      const downloadSection = document.getElementById('downloadSection');
+      const downloadButton = document.getElementById('downloadButton');
 
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script>
-    function handleCredentialResponse(response) {
-      const id_token = response.credential;
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/signin', true);
-      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          if (response.success) {
-            document.getElementById('email').value = response.email;
-            document.getElementById('uploadForm').submit();
-          } else {
-            alert('Error: ' + response.message);
-          }
-        } else {
-          alert('Error: ' + xhr.statusText);
-        }
-      };
-      xhr.send('id_token=' + id_token);
-    }
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
 
-    window.onload = () => {
-      google.accounts.id.initialize({
-        client_id: '221219740178-ucbj6j5fd5t3ne8b13kcc6ki17qn29eo.apps.googleusercontent.com',
-        callback: handleCredentialResponse
-      });
-      google.accounts.id.renderButton(
-        document.getElementById('googleSignInButton'),
-        { theme: 'outline', size: 'large' }
-      );
-    };
-  </script>
-
-  <script>
-    const uploadForm = document.getElementById('uploadForm');
-    const progressContainer = document.querySelector('.progress-container');
-    const progressBar = document.querySelector('.progress-bar');
-    const downloadSection = document.getElementById('downloadSection');
-    const downloadButton = document.getElementById('downloadButton');
-
-    uploadForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(uploadForm);
-      const videoFile = formData.get('video');
-      const subtitlesFile = formData.get('subtitles');
-      const logoFile = formData.get('logo');
-      const font = formData.get('font');
-      const outputFileName = formData.get('outputFileName');
-      const email = document.getElementById('email').value;
-
-      if (!videoFile || !subtitlesFile) {
-        alert('Please select both video and subtitles files.');
-        return;
-      }
-
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/upload', true);
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload');
+        xhr.upload.addEventListener('progress', (event) => {
           const percent = (event.loaded / event.total) * 100;
-          progressBar.style.width = `${percent}%`;
-        }
-      };
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          if (response.success) {
-            downloadSection.style.display = 'block';
-            downloadButton.addEventListener('click', () => {
-              window.location.href = response.downloadUrl;
-            });
-          } else {
-            alert('Error: ' + response.message);
+          progressBar.style.width = percent + '%';
+        });
+
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+              console.log('Upload completed!');
+              downloadSection.style.display = 'block';
+              const downloadLink = xhr.responseText;
+              downloadButton.addEventListener('click', () => {
+                window.location.href = downloadLink;
+              });
+            } else {
+              console.error('Upload failed!');
+            }
           }
-        } else {
-          alert('Error: ' + xhr.statusText);
-        }
-      };
-      xhr.send(formData);
-    });
-  </script>
+        };
+
+        xhr.send(formData);
+      });
+    </script>
+  </div>
 </body>
 </html>
