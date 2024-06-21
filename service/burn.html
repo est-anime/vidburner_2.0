@@ -33,6 +33,25 @@
       text-align: center;
     }
 
+    header, footer {
+      background-color: var(--primary-color);
+      color: var(--text-color);
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+    }
+
+    header h1 {
+      font-size: 2em;
+    }
+
+    footer p {
+      font-size: 0.9em;
+    }
+
     h1 {
       font-size: 2.5em;
       margin-bottom: 20px;
@@ -128,6 +147,11 @@
   </style>
 </head>
 <body>
+  <header>
+    <h1>Videoburner</h1>
+    <p>Burn Subtitle into Video Online</p>
+  </header>
+  
   <div class="container">
     <h1>Upload Video and Subtitles</h1>
     <form id="uploadForm" enctype="multipart/form-data">
@@ -202,5 +226,9 @@
       });
     </script>
   </div>
+  
+  <footer>
+    <p>&copy; 2024 Videoburner. All rights reserved.</p>
+  </footer>
 </body>
 </html>
