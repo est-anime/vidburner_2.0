@@ -16,6 +16,7 @@
       --font-family: 'Roboto', sans-serif;
       --progress-bar-bg: #333;
       --progress-bar-fill: var(--secondary-color);
+      --header-footer-bg: #000000;
     }
 
     body {
@@ -34,22 +35,45 @@
     }
 
     header, footer {
-      background-color: var(--primary-color);
+      background-color: var(--header-footer-bg);
       color: var(--text-color);
       text-align: center;
       padding: 10px 0;
     }
 
-    h1, h2, h3 {
-      margin: 0;
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
     }
 
     header h1 {
       font-size: 2em;
+      margin: 0;
+    }
+
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      gap: 20px;
+    }
+
+    nav ul li {
+      display: inline;
+    }
+
+    nav ul li a {
+      color: var(--text-color);
+      text-decoration: none;
+      font-size: 1em;
     }
 
     footer p {
       font-size: 0.9em;
+      margin: 0;
     }
 
     h1 {
@@ -143,13 +167,29 @@
       button {
         font-size: 1em;
       }
+      
+      header {
+        flex-direction: column;
+      }
+      
+      nav ul {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
     }
   </style>
 </head>
 <body>
   <header>
     <h1>Videoburner</h1>
-    <p>Burn Subtitle into Video Online</p>
+    <nav>
+      <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Services</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
   </header>
   
   <div class="container">
