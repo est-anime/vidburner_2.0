@@ -22,11 +22,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+app.get('/burn', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'burn.html'));
 });
 
-app.get('/home', (req, res) => {
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
