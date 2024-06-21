@@ -20,6 +20,10 @@ app.use(express.static(path.join(__dirname, 'img')));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+app.get('/logo.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'service', 'logo.png'));
+});
+
 app.get('/burn', (req, res) => {
   res.sendFile(path.join(__dirname, 'service', 'burn.html'));
 });
