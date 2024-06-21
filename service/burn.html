@@ -4,7 +4,8 @@
   <title>Videoburner - Burn Subtitle into Video Online</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="icon" href="img/logo.png" type="image/png">
+  <!-- Favicon -->
+  <link rel="icon" href="img/logo.png" type="image/x-icon">
   <style>
     :root {
       --primary-color: #007bff;
@@ -52,6 +53,14 @@
     header h1 {
       font-size: 2em;
       margin: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    header img {
+      height: 50px; /* Adjust height as needed */
+      width: auto; /* Maintain aspect ratio */
+      margin-right: 10px;
     }
 
     nav {
@@ -217,8 +226,8 @@
 </head>
 <body>
   <header>
-   <h1>
-      <img src="img/logo.png" alt="Videoburner Logo">Videoburner
+    <h1>
+      <img src="logo.png" alt="Videoburner Logo">Videoburner
     </h1>
     <div class="menu-icon" onclick="toggleMenu()">
       <div class="bar1"></div>
