@@ -87,6 +87,24 @@ a {
     color: #f00;
 }
 
+header {
+    background-color: #000;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 2px solid #f00;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 24px;
+    flex-grow: 1;
+}
+
 .menu-icon {
     font-size: 24px;
     cursor: pointer;
@@ -118,6 +136,43 @@ nav ul li a {
 
 nav ul li a:hover {
     color: #f00;
+}
+
+/* Dropdown Menu Styles */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 50px;
+    left: 20px;
+    background-color: #000;
+    border: 1px solid #f00;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 10px 0;
+}
+
+.dropdown-menu ul li {
+    margin: 0;
+}
+
+.dropdown-menu ul li a {
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 20px;
+    display: block;
+}
+
+.dropdown-menu ul li a:hover {
+    background-color: #f00;
 }
     </style>
 </head>
