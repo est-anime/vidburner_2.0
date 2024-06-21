@@ -53,6 +53,11 @@
       margin: 0;
     }
 
+    nav {
+      display: flex;
+      align-items: center;
+    }
+
     nav ul {
       list-style: none;
       padding: 0;
@@ -69,6 +74,32 @@
       color: var(--text-color);
       text-decoration: none;
       font-size: 1em;
+    }
+
+    .menu-icon {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+    }
+
+    .menu-icon div {
+      width: 25px;
+      height: 3px;
+      background-color: var(--text-color);
+      margin: 4px 0;
+      transition: 0.4s;
+    }
+
+    .menu-active .bar1 {
+      transform: rotate(-45deg) translate(-5px, 6px);
+    }
+
+    .menu-active .bar2 {
+      opacity: 0;
+    }
+
+    .menu-active .bar3 {
+      transform: rotate(45deg) translate(-5px, -6px);
     }
 
     footer p {
@@ -156,26 +187,29 @@
     }
 
     @media only screen and (max-width: 600px) {
-      .container {
-        width: 90%;
-      }
-
-      label, input, select {
-        font-size: 0.9em;
-      }
-
-      button {
-        font-size: 1em;
-      }
-      
       header {
         flex-direction: column;
+        align-items: flex-start;
       }
       
       nav ul {
         flex-direction: column;
-        align-items: center;
-        gap: 10px;
+        display: none;
+        width: 100%;
+      }
+      
+      nav ul li {
+        width: 100%;
+        text-align: left;
+        padding: 10px 0;
+      }
+
+      .menu-icon {
+        display: flex;
+      }
+
+      nav.active ul {
+        display: flex;
       }
     }
   </style>
@@ -183,6 +217,11 @@
 <body>
   <header>
     <h1>Videoburner</h1>
+    <div class="menu-icon" onclick="toggleMenu()">
+      <div class="bar1"></div>
+      <div class="bar2"></div>
+      <div class="bar3"></div>
+    </div>
     <nav>
       <ul>
         <li><a href="#">Home</a></li>
@@ -231,6 +270,13 @@
     </div>
 
     <script>
+      function toggleMenu() {
+        const nav = document.querySelector('nav');
+        const menuIcon = document.querySelector('.menu-icon');
+        nav.classList.toggle('active');
+        menuIcon.classList.toggle('menu-active');
+      }
+
       const form = document.getElementById('uploadForm');
       const progressBar = document.getElementById('progressBar');
       const downloadSection = document.getElementById('downloadSection');
