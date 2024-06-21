@@ -6,15 +6,11 @@ const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
-const google = require('googleapis');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
-app.use(express.json({ limit: '500mb' }));  // Increase limit as needed
-app.use(express.urlencoded({ limit: '500mb', extended: true }));  // Increase limit as needed
-
 app.use(express.json());
 
 // Serve static files from the 'public' directory
@@ -30,14 +26,6 @@ app.get('/home', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
 app.get('/services', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'services.html'));
 });
@@ -46,17 +34,8 @@ app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'contact.html'));
 });
 
-// Route to handle sign-in
-app.post('/signin', (req, res) => {
-  // Process the sign-in request here
-  const idToken = req.body.id_token;
-
-  // For now, let's just send a response indicating success
-  res.status(200).json({ success: true, message: 'Sign-in successful' });
-});
-
 app.post('/upload', (req, res) => {
-  if (!req.files ||!req.files.video ||!req.files.subtitles) {
+  if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
 
@@ -71,7 +50,7 @@ app.post('/upload', (req, res) => {
   const uniqueId = crypto.randomBytes(16).toString('hex');
   const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
   const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
-  const logoPath = logoFile? path.join(__dirname, `/uploads/logo_${uniqueId}.png`) : null;
+  const logoPath = logoFile ? path.join(__dirname, `/uploads/logo_${uniqueId}.png`) : null;
   const outputPath = path.join(__dirname, '/uploads', outputFileName);
 
   videoFile.mv(videoPath, (err) => {
@@ -123,7 +102,7 @@ app.post('/upload', (req, res) => {
     }
 
     const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
- 
+
     executeFfmpeg(ffmpegCommand);
   };
 
@@ -150,7 +129,7 @@ app.post('/upload', (req, res) => {
     }
 
     const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
-    
+
     executeFfmpeg(ffmpegCommand);
   };
 
@@ -188,86 +167,48 @@ app.post('/upload', (req, res) => {
       res.write('data: 100\n\n');
       res.end();
 
-      // Authenticate with Google Drive using the access token
-      authenticateWithGoogleDrive(userEmail, outputPath);
+      // Construct the download link
+      const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
+
+      // Send an email with the download link
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.Email,
+          pass: process.env.APP_KEY,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.Email,
+        to: userEmail,
+        subject: 'Video Encoding Completed',
+        text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error(`Email sending error: ${error}`);
+        } else {
+          console.log(`Email sent: ${info.response}`);
+        }
+      });
+
+      // Delete the processed video after 24 hours
+      setTimeout(() => {
+        fs.unlink(outputPath, (err) => {
+          if (err) {
+            console.error(`Error deleting file: ${err}`);
+          } else {
+            console.log('Processed video deleted successfully after 24 hours.');
+          }
+        });
+      }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
     });
   };
 });
-
-const authenticateWithGoogleDrive = (userEmail, outputPath) => {
-  const auth = new google.auth.GoogleAuth({
-    // If you have a JSON key file, use this:
-    keyFile: 'root/vidburner_2.0/key/vidburner-c6c5d2c5488f.json',
-    // If you have a service account email, use this:
-    clientEmail: 'vid-363@vidburner.iam.gserviceaccount.com',
-    scopes: ['https://www.googleapis.com/auth/drive']
-  });
-
-  const drive = google.drive('v3');
-
-  auth.authorize((err, tokens) => {
-    if (err) {
-      console.error(`Error authenticating with Google Drive: ${err}`);
-      return;
-    }
-
-    const accessToken = tokens.access_token;
-
-    // Create a new folder named "Vidburner" if it doesn't exist
-    createVidburnerFolder(accessToken, userEmail, outputPath);
-  });
-};
-
-const createVidburnerFolder = (accessToken, userEmail, outputPath) => {
-  const headers = {
-    'Authorization': `Bearer ${accessToken}`,
-    'Content-Type': 'application/json'
-  };
-
-  const folderName = 'Vidburner';
-  const folderMetadata = {
-    'name': folderName,
-    'mimeType': 'application/vnd.google-apps.folder'
-  };
-
-  fetch('https://www.googleapis.com/drive/v3/files', {
-    method: 'POST',
-    headers: headers,
-    body: JSON.stringify(folderMetadata)
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log(`Folder created: ${data.name}`);
-    // Upload the encoded video to the "Vidburner" folder
-    uploadVideoToGoogleDrive(accessToken, data.id, outputPath);
-  })
-  .catch(error => console.error(`Error creating folder: ${error}`));
-};
-
-const uploadVideoToGoogleDrive = (accessToken, folderId, outputPath) => {
-  const headers = {
-    'Authorization': `Bearer ${accessToken}`,
-    'Content-Type': 'video/mp4'
-  };
-
-  const videoFile = fs.readFileSync(outputPath);
-  const uploadMetadata = {
-    'name': 'output.mp4',
-    'mimeType': 'video/mp4',
-    'parents': [folderId]
-  };
-
-  fetch('https://www.googleapis.com/upload/drive/v3/files', {
-    method: 'POST',
-    headers: headers,
-    body: videoFile
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log(`Video uploaded: ${data.name}`);
-  })
-  .catch(error => console.error(`Error uploading video: ${error}`));
-};
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${port}`);
