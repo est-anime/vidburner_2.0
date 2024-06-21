@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Vidburner</title>
+    <title>Vidburner - Register</title>
     <style>
-        @import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
+         @import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
 
 body {
     font-family: 'Montserrat', sans-serif;
@@ -89,63 +89,20 @@ a {
     </style>
 </head>
 <body>
-    <header>
-        <div class="menu-icon">&#9776;</div>
-        <h1>Vidburner</h1>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="login.html">Login</a></li>
-                <li><a href="register.html">Sign Up</a></li>
-                <li><a href="contact.html">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
-    <div class="background">
-        <div class="register-container">
-            <form action="your-register-url-here" method="POST">
-                <h1>Create an Account</h1>
-                <div class="input-container">
-                    <input type="text" name="username" placeholder="Username" required/>
-                    <input type="email" name="email" placeholder="Email" required/>
-                    <input type="password" name="password" placeholder="Password" required/>
-                    <input type="password" name="confirm-password" placeholder="Re-enter Password" required/>
-                    <label><input type="checkbox" name="terms" required> I agree to the <a href="#">Terms of Use</a> and <a href="#">Privacy Policy</a></label>
-                    <button type="submit">Register</button>
-                    <a class="google" href="https://accounts.google.com/">Google</a>
-                </div>
-            </form>
-        </div>
+    <div class="register-container">
+        <form action="your-register-url-here" method="POST">
+            <h1>Create an Account</h1>
+            <input type="text" name="username" placeholder="Username" required/>
+            <input type="email" name="email" placeholder="Email" required/>
+            <input type="password" name="password" placeholder="Password" required/>
+            <input type="password" name="confirm_password" placeholder="Re-enter Password" required/>
+            <label>
+                <input type="checkbox" required> I agree to the <a href="#">Terms of Use</a> and <a href="#">Privacy Policy</a>.
+            </label>
+            <button type="submit">Register</button>
+            <span>or</span>
+            <a class="google" href="your-google-login-url-here">G+ Google</a>
+        </form>
     </div>
-    <footer>
-        <p>&copy; 2024 Vidburner. All rights reserved.</p>
-    </footer>
-
-    <div class="dropdown-menu" id="dropdownMenu">
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="login.html">Login</a></li>
-            <li><a href="register.html">Sign Up</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
-    </div>
-
-    <script>
-        document.querySelector('.menu-icon').addEventListener('click', function() {
-            document.getElementById('dropdownMenu').classList.toggle('show');
-        });
-
-        window.addEventListener('click', function(event) {
-            if (!event.target.matches('.menu-icon')) {
-                var dropdowns = document.getElementsByClassName('dropdown-menu');
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
-            }
-        });
-    </script>
 </body>
 </html>
