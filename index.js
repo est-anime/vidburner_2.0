@@ -18,11 +18,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+app.get('/burn', (req, res) => {
+  res.sendFile(path.join(__dirname, 'service', 'burn.html'));
 });
 
-app.get('/home', (req, res) => {
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
@@ -32,6 +32,14 @@ app.get('/services', (req, res) => {
 
 app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'contact.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
 app.post('/upload', (req, res) => {
