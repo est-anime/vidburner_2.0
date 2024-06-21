@@ -172,11 +172,8 @@ app.post('/upload', (req, res) => {
     });
 
     ffmpegProcess.on('exit', () => {
-     // Construct the download link
-  const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
-
-  // Send the download link as a response to the client
-  res.status(200).send(downloadLink);
+      res.write('data: 100\n\n');
+      res.end();;
 
       // Construct the download link
       const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
