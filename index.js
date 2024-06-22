@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
 // MongoDB Atlas connection URI
-const uri = 'your_mongodb_atlas_connection_string'; // Replace with your MongoDB Atlas connection string
+const uri = 'mongodb+srv://vpsest:AGdWW4NiuKCyB2tz@burner.y3sscsv.mongodb.net/?retryWrites=true&w=majority&appName=burner'; // Replace with your MongoDB Atlas connection string
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 client.connect(err => {
