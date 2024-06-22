@@ -18,19 +18,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
 // MySQL Database Connection
-const db = mysql.createConnection({
-  host: '127.0.0.1',
+// MySQL Database Connection Pool
+const pool = mysql.createPool({
+  connectionLimit: 10, // Adjust as per your application's needs
+  host: 'localhost',
   user: 'majid',
   password: 'jake@100',
   database: 'vidburner_db'
-});
-
-db.connect((err) => {
-  if (err) {
-    console.error('Database connection failed: ' + err.stack);
-    return;
-  }
-  console.log('Connected to database');
 });
 
 // Serve static files from the 'public' directory
@@ -62,6 +56,7 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
+// Registration Endpoint
 app.post('/register', async (req, res) => {
   const { username, email, password, confirm_password } = req.body;
 
@@ -77,7 +72,7 @@ app.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
-    db.query(sql, [username, email, hashedPassword], (err, result) => {
+    pool.query(sql, [username, email, hashedPassword], (err, result) => {
       if (err) {
         console.error('Error inserting into database: ' + err.message);
         return res.status(500).send('Server error');
@@ -90,6 +85,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
+// Login Endpoint
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -98,7 +94,7 @@ app.post('/login', (req, res) => {
   }
 
   const sql = `SELECT * FROM users WHERE username = ?`;
-  db.query(sql, [username], async (err, results) => {
+  pool.query(sql, [username], async (err, results) => {
     if (err) {
       console.error('Error querying database: ' + err.message);
       return res.status(500).send('Server error');
@@ -118,7 +114,6 @@ app.post('/login', (req, res) => {
     res.status(200).send('Login successful');
   });
 });
-
 
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
