@@ -11,6 +11,9 @@ const crypto = require('crypto'); // For generating unique filename
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const mongoose = require('mongoose');
+const User = require('./models/User');
+const { isAuthenticated } = require('./middleware/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -67,6 +70,20 @@ app.get('/login', (req, res) => {
 
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+app.get('/dashboard', isAuthenticated, (req, res) => {
+  res.sendFile(__dirname + '/public/dashboard.html');
+});
+
+app.get('/api/encoding-history', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId); // Assuming you have a User model and session management
+    res.status(200).json({ history: user.encodingHistory });
+  } catch (error) {
+    console.error(`Error fetching encoding history: ${error}`);
+    res.status(500).send('Error fetching encoding history.');
+  }
 });
 
 app.post('/register', async (req, res) => {
@@ -257,6 +274,18 @@ app.post('/upload', (req, res) => {
       // Construct the download link
       const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
 
+ // Save the encoding history to the database
+        const user = await User.findById(req.session.userId); // Assuming you have a User model and session management
+        user.encodingHistory.push({
+          video: videoFile.name,
+          subtitles: subtitlesFile.name,
+          logo: logoFile ? logoFile.name : null,
+          outputFileName,
+          encodedAt: new Date(),
+          downloadLink: `/uploads/${outputFileName}`
+        });
+        await user.save();
+      
       // Send an email with the download link
       const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
