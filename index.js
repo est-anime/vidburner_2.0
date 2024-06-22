@@ -2,6 +2,7 @@ const express = require('express');
 const fileUpload = require('express-fileupload');
 const { exec } = require('child_process');
 const fs = require('fs');
+const { MongoClient } = require('mongodb');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
@@ -17,14 +18,16 @@ app.use(fileUpload());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
-// MySQL Database Connection
-// MySQL Database Connection Pool
-const pool = mysql.createPool({
-  connectionLimit: 10, // Adjust as per your application's needs
-  host: '65.20.71.29',
-  user: 'majid',
-  password: 'jake@100',
-  database: 'vidburner_db'
+// MongoDB Atlas connection URI
+const uri = 'your_mongodb_atlas_connection_string'; // Replace with your MongoDB Atlas connection string
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+client.connect(err => {
+  if (err) {
+    console.error('Failed to connect to MongoDB Atlas:', err);
+    return;
+  }
+  console.log('Connected successfully to MongoDB Atlas');
 });
 
 // Serve static files from the 'public' directory
@@ -56,7 +59,6 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-// Registration Endpoint
 app.post('/register', async (req, res) => {
   const { username, email, password, confirm_password } = req.body;
 
@@ -68,51 +70,43 @@ app.post('/register', async (req, res) => {
     return res.status(400).send('Passwords do not match');
   }
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-    const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
-    pool.query(sql, [username, email, hashedPassword], (err, result) => {
-      if (err) {
-        console.error('Error inserting into database: ' + err.message);
-        return res.status(500).send('Server error');
-      }
-      res.status(200).send('Registration successful');
-    });
+  const usersCollection = client.db('your_database_name').collection('users'); // Replace with your collection name
+
+  try {
+    const result = await usersCollection.insertOne({ username, email, password: hashedPassword });
+    console.log('User registered successfully:', result.insertedId);
+    res.status(200).send('Registration successful');
   } catch (error) {
-    console.error('Error hashing password: ' + error.message);
+    console.error('Error inserting into MongoDB Atlas:', error);
     res.status(500).send('Server error');
   }
 });
 
-// Login Endpoint
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
     return res.status(400).send('Username and password are required');
   }
 
-  const sql = `SELECT * FROM users WHERE username = ?`;
-  pool.query(sql, [username], async (err, results) => {
-    if (err) {
-      console.error('Error querying database: ' + err.message);
-      return res.status(500).send('Server error');
-    }
+  const usersCollection = client.db('your_database_name').collection('users'); // Replace with your collection name
 
-    if (results.length === 0) {
+  try {
+    const user = await usersCollection.findOne({ username });
+    if (!user) {
       return res.status(401).send('Invalid username or password');
     }
-
-    const user = results[0];
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
       return res.status(401).send('Invalid username or password');
     }
-
     res.status(200).send('Login successful');
-  });
+  } catch (error) {
+    console.error('Error querying database:', error);
+    res.status(500).send('Server error');
+  }
 });
 
 app.post('/upload', (req, res) => {
