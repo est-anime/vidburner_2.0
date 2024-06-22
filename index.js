@@ -72,7 +72,7 @@ app.post('/register', async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const usersCollection = client.db('your_database_name').collection('users'); // Replace with your collection name
+  const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
 
   try {
     const result = await usersCollection.insertOne({ username, email, password: hashedPassword });
