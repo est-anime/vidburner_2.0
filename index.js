@@ -19,7 +19,7 @@ app.use(express.json());
 
 // MySQL Database Connection
 const db = mysql.createConnection({
-  host: 'localhost',
+  host: '127.0.0.1',
   user: 'majid',
   password: 'jake@100',
   database: 'vidburner_db'
