@@ -25,15 +25,10 @@ app.use(session({ secret: 'secret-key', resave: false, saveUninitialized: true }
 
 // MongoDB Atlas connection URI
 const uri = 'mongodb+srv://vpsest:AGdWW4NiuKCyB2tz@burner.y3sscsv.mongodb.net/?retryWrites=true&w=majority&appName=burner'; // Replace with your MongoDB Atlas connection string
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-client.connect(err => {
-  if (err) {
-    console.error('Failed to connect to MongoDB Atlas:', err);
-    return;
-  }
-  console.log('Connected successfully to MongoDB Atlas');
-});
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected successfully to MongoDB Atlas'))
+  .catch(err => console.error('Failed to connect to MongoDB Atlas:', err));
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
