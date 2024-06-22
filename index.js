@@ -77,7 +77,7 @@ app.post('/register', async (req, res) => {
   try {
     const result = await usersCollection.insertOne({ username, email, password: hashedPassword });
     console.log('User registered successfully:', result.insertedId);
-    res.status(200).send('Registration successful');
+    res.status(200).send('<script>window.location.href = "/login";</script>');
   } catch (error) {
     console.error('Error inserting into MongoDB Atlas:', error);
     res.status(500).send('Server error');
@@ -93,7 +93,7 @@ app.post('/login', async (req, res) => {
 
   const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
 
-  try {
+   try {
     const user = await usersCollection.findOne({ username });
     if (!user) {
       return res.status(401).send('Invalid username or password');
@@ -102,7 +102,9 @@ app.post('/login', async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).send('Invalid username or password');
     }
-    res.status(200).send('Login successful');
+
+    req.session.user = user;
+    res.status(200).send('<script>window.location.href = "/burn";</script>');
   } catch (error) {
     console.error('Error querying database:', error);
     res.status(500).send('Server error');
