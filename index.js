@@ -121,6 +121,23 @@ app.post('/login', async (req, res) => {
   }
 });
 
+app.get('/dashboard', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+app.get('/history', isAuthenticated, async (req, res) => {
+  const userId = req.session.user._id; // Assuming your user document has an _id field
+  const historyCollection = client.db('burner').collection('history'); // Replace with your collection name
+
+  try {
+    const history = await historyCollection.find({ userId }).toArray();
+    res.json(history);
+  } catch (error) {
+    console.error('Error fetching history from MongoDB Atlas:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
