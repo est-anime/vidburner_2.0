@@ -4,6 +4,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const readline = require('readline');
 const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filename
 
