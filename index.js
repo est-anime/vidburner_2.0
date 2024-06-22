@@ -10,6 +10,7 @@ const path = require('path');
 const crypto = require('crypto'); // For generating unique filename
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
+const session = require('express-session');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,6 +18,7 @@ const port = process.env.PORT || 3000;
 app.use(fileUpload());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(session({ secret: 'secret-key', resave: false, saveUninitialized: true }));
 
 // MongoDB Atlas connection URI
 const uri = 'mongodb+srv://vpsest:AGdWW4NiuKCyB2tz@burner.y3sscsv.mongodb.net/?retryWrites=true&w=majority&appName=burner'; // Replace with your MongoDB Atlas connection string
@@ -93,7 +95,7 @@ app.post('/login', async (req, res) => {
 
   const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
 
-   try {
+  try {
     const user = await usersCollection.findOne({ username });
     if (!user) {
       return res.status(401).send('Invalid username or password');
