@@ -40,18 +40,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-function isAuthenticated(req, res, next) {
-  if (req.session.user) {
-    next();
-  } else {
-    res.redirect('/login');
-  }
-}
-
-app.get('/burn', isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, 'service', 'burn.html'));
-});
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
@@ -72,69 +60,59 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-app.get('/dashboard', isAuthenticated, (req, res) => {
-  res.sendFile(__dirname + '/public/dashboard.html');
-});
-
-app.get('/api/encoding-history', isAuthenticated, async (req, res) => {
-  try {
-    const user = await User.findById(req.session.userId); // Assuming you have a User model and session management
-    res.status(200).json({ history: user.encodingHistory });
-  } catch (error) {
-    console.error(`Error fetching encoding history: ${error}`);
-    res.status(500).send('Error fetching encoding history.');
-  }
-});
-
 app.post('/register', async (req, res) => {
-  const { username, email, password, confirm_password } = req.body;
-
-  if (!username || !email || !password || !confirm_password) {
-    return res.status(400).send('All fields are required');
-  }
-
-  if (password !== confirm_password) {
-    return res.status(400).send('Passwords do not match');
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).send('Please fill in all fields.');
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-
-  const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
+  const user = new User({ email, password: hashedPassword });
 
   try {
-    const result = await usersCollection.insertOne({ username, email, password: hashedPassword });
-    console.log('User registered successfully:', result.insertedId);
-    res.status(200).send('<script>window.location.href = "/login";</script>');
+    await user.save();
+    res.redirect('/login');
   } catch (error) {
-    console.error('Error inserting into MongoDB Atlas:', error);
-    res.status(500).send('Server error');
+    res.status(400).send('User already exists.');
   }
 });
 
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
 
-  if (!username || !password) {
-    return res.status(400).send('Username and password are required');
+  if (user && await bcrypt.compare(password, user.password)) {
+    req.session.userId = user._id;
+    res.redirect('/dashboard');
+  } else {
+    res.status(400).send('Invalid credentials.');
   }
+});
 
-  const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
+app.get('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      return res.status(500).send('Failed to logout.');
+    }
+    res.redirect('/login');
+  });
+});
 
+app.get('/dashboard', isAuthenticated, (req, res) => {
+  res.sendFile(__dirname + '/public/dashboard.html');
+});
+
+app.get('/burn', isAuthenticated, (req, res) => {
+  res.sendFile(__dirname + '/public/burn.html');
+});
+
+app.get('/api/encoding-history', isAuthenticated, async (req, res) => {
   try {
-    const user = await usersCollection.findOne({ username });
-    if (!user) {
-      return res.status(401).send('Invalid username or password');
-    }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).send('Invalid username or password');
-    }
-
-    req.session.user = user;
-    res.status(200).send('<script>window.location.href = "/burn";</script>');
+    const user = await User.findById(req.session.userId);
+    res.status(200).json({ history: user.encodingHistory });
   } catch (error) {
-    console.error('Error querying database:', error);
-    res.status(500).send('Server error');
+    console.error(`Error fetching encoding history: ${error}`);
+    res.status(500).send('Error fetching encoding history.');
   }
 });
 
