@@ -23,7 +23,6 @@ const db = mysql.createConnection({
   user: 'majid',
   password: 'jake@100',
   database: 'vidburner_db'
-  socketPath: "/Applications/MAMP/tmp/mysql/mysql.sock"
 });
 
 db.connect((err) => {
