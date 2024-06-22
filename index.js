@@ -6,12 +6,23 @@ const readline = require('readline');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filenames
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(fileUpload());
 app.use(express.json());
+
+app.use('/register.php', createProxyMiddleware({
+    target: 'https://vidburner.online/', // Update with your PHP server address
+    changeOrigin: true,
+}));
+
+app.use('/login.php', createProxyMiddleware({
+    target: 'https://vidburner.online/', // Update with your PHP server address
+    changeOrigin: true,
+}));
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
