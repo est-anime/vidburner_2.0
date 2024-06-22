@@ -85,7 +85,14 @@
       text-decoration: none;
       font-size: 1em;
     }
-
+    
+    header img.user-icon {
+      height: 50px; /* Adjust height as needed */
+      width: auto; /* Maintain aspect ratio */
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    
     .menu-icon {
       display: none;
       flex-direction: column;
@@ -229,6 +236,7 @@
     <h1>
       <img src="img/logo.png" alt="Videoburner Logo">Videoburner
     </h1>
+    <a href="/dashboard"><img src="img/user.png" alt="User Dashboard" class="user-icon"></a>
     <div class="menu-icon" onclick="toggleMenu()">
       <div class="bar1"></div>
       <div class="bar2"></div>
