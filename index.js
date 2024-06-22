@@ -21,7 +21,11 @@ const port = process.env.PORT || 3000;
 app.use(fileUpload());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(session({ secret: 'secret-key', resave: false, saveUninitialized: true }));
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: false
+}));
 
 // MongoDB Atlas connection URI
 const uri = 'mongodb+srv://vpsest:AGdWW4NiuKCyB2tz@burner.y3sscsv.mongodb.net/?retryWrites=true&w=majority&appName=burner'; // Replace with your MongoDB Atlas connection string
@@ -74,23 +78,29 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  console.log(`Login attempt with email: ${email}`);
 
-  if (user && await bcrypt.compare(password, user.password)) {
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      console.log(`User with email ${email} not found.`);
+      return res.status(400).send('Invalid credentials.');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      console.log(`Invalid password for email: ${email}`);
+      return res.status(400).send('Invalid credentials.');
+    }
+
     req.session.userId = user._id;
     res.redirect('/dashboard');
-  } else {
-    res.status(400).send('Invalid credentials.');
+  } catch (error) {
+    console.error(`Login error: ${error.message}`);
+    res.status(500).send('Login failed. Please try again later.');
   }
-});
-
-app.get('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) {
-      return res.status(500).send('Failed to logout.');
-    }
-    res.redirect('/login');
-  });
 });
 
 app.get('/dashboard', isAuthenticated, (req, res) => {
