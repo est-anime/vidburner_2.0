@@ -26,12 +26,13 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 client.connect(err => {
   if (err) {
-    console.error('Failed to connect to MongoDB Atlas:', err);
+    console.error('Failed to connect to MongoDB:', err);
     return;
   }
-  console.log('Connected successfully to MongoDB Atlas');
-});
+  console.log('Connected to MongoDB');
 
+  const db = client.db('burner');
+  const historyCollection = db.collection('history');
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
