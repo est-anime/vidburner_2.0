@@ -106,8 +106,7 @@
   <footer>
     <p>&copy; 2024 Videoburner. All rights reserved.</p>
   </footer>
-
-  <script>
+   <script>
     // Fetch encoding history and populate the list
     async function fetchHistory() {
       try {
@@ -120,6 +119,7 @@
         historyList.innerHTML = ''; // Clear existing list items
         history.forEach(item => {
           const li = document.createElement('li');
+          li.className = 'history-item';
           li.innerHTML = `<span>${item.fileName}</span>: ${item.status}`;
           historyList.appendChild(li);
         });
