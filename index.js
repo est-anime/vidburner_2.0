@@ -37,7 +37,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.get('/burn', (req, res) => {
+function isAuthenticated(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    res.redirect('/login');
+  }
+}
+
+app.get('/burn', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'service', 'burn.html'));
 });
 
