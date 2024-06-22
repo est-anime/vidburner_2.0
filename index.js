@@ -42,26 +42,6 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-// Route to handle POST request from register.html form
-app.post('/register', (req, res) => {
-  const { username, email, password } = req.body;
-
-  // Process registration logic here
-  // Example: Save user to database, send confirmation email, etc.
-
-  res.send('Registration successful!'); // Replace with appropriate response
-});
-
-// Route to handle POST request from login.html form
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-
-  // Process login logic here
-  // Example: Validate credentials, set session, redirect user, etc.
-
-  res.send('Login successful!'); // Replace with appropriate response
-});
-
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
