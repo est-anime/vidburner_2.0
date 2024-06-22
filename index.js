@@ -21,10 +21,10 @@ app.use(express.json());
 // MySQL Database Connection Pool
 const pool = mysql.createPool({
   connectionLimit: 10, // Adjust as per your application's needs
-  host: 'localhost',
-  user: 'majid',
-  password: 'jake@100',
-  database: 'vidburner_db'
+  host: 'process.env.DB_HOST',
+  user: 'process.env.DB_USER',
+  password: 'process.env.DB_PASS',
+  database: 'process.env.DB_NAME'
 });
 
 // Serve static files from the 'public' directory
