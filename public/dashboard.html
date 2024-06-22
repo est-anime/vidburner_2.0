@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Encoding History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="img/logo.png" type="image/x-icon">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #000;
+        }
+
+        header h1 {
+            font-size: 2em;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        header img {
+            height: 50px;
+            width: auto;
+            margin-right: 10px;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 20px;
+        }
+
+        nav ul li {
+            display: inline;
+        }
+
+        nav ul li a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1em;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .history-item {
+            background-color: #1f1f1f;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .history-item h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .history-item p {
+            margin: 5px 0;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>
+            <img src="img/logo.png" alt="Videoburner Logo">Videoburner Dashboard
+        </h1>
+        <nav>
+            <ul>
+                <li><a href="/burn">Burn</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <h1>Your Encoding History</h1>
+        <ul class="history-list" id="historyList"></ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/encoding-history')
+                .then(response => response.json())
+                .then(data => {
+                    const historyList = document.getElementById('historyList');
+                    if (data.history.length > 0) {
+                        data.history.forEach(item => {
+                            const listItem = document.createElement('li');
+                            listItem.className = 'history-item';
+                            listItem.innerHTML = `
+                                <h2>${item.outputFileName}</h2>
+                                <p>Video: ${item.video}</p>
+                                <p>Subtitles: ${item.subtitles}</p>
+                                <p>Encoded At: ${new Date(item.encodedAt).toLocaleString()}</p>
+                                <a href="${item.downloadLink}">Download</a>
+                            `;
+                            historyList.appendChild(listItem);
+                        });
+                    } else {
+                        historyList.innerHTML = '<p>No encoding history found.</p>';
+                    }
+                })
+                .catch(error => console.error('Error fetching encoding history:', error));
+        });
+    </script>
+</body>
+</html>
