@@ -91,7 +91,7 @@ app.post('/login', async (req, res) => {
     return res.status(400).send('Username and password are required');
   }
 
-  const usersCollection = client.db('your_database_name').collection('users'); // Replace with your collection name
+  const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
 
   try {
     const user = await usersCollection.findOne({ username });
