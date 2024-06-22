@@ -8,7 +8,6 @@ const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filename
-const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const mongoose = require('mongoose');
@@ -157,7 +156,7 @@ app.post('/upload', isAuthenticated, async (req, res) => {
   }
 });
 
-  const processVideoWithLogo = async () => {
+const processVideoWithLogo = async () => {
   const fontMapping = {
     'Arial-Bold': 'Arial-Bold.ttf',
     'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
@@ -211,7 +210,7 @@ const processVideoWithoutLogo = async () => {
   await executeFfmpeg(ffmpegCommand);
 };
 
-  const executeFfmpeg = (command) => {
+const executeFfmpeg = (command) => {
   return new Promise((resolve, reject) => {
     const ffmpegProcess = exec(command);
 
@@ -307,7 +306,7 @@ const processVideoWithoutLogo = async () => {
     });
   });
 };
-  
+
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${port}`);
 });
