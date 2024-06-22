@@ -21,7 +21,7 @@ app.use(express.json());
 // MySQL Database Connection Pool
 const pool = mysql.createPool({
   connectionLimit: 10, // Adjust as per your application's needs
-  host: 'localhost',
+  host: '65.20.71.29',
   user: 'majid',
   password: 'jake@100',
   database: 'vidburner_db'
