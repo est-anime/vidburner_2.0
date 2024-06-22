@@ -14,12 +14,12 @@ const port = process.env.PORT || 3000;
 app.use(fileUpload());
 app.use(express.json());
 
-app.use('/register.php', createProxyMiddleware({
+app.use('/public/register.php', createProxyMiddleware({
     target: 'https://vidburner.online/', // Update with your PHP server address
     changeOrigin: true,
 }));
 
-app.use('/login.php', createProxyMiddleware({
+app.use('/public/login.php', createProxyMiddleware({
     target: 'https://vidburner.online/', // Update with your PHP server address
     changeOrigin: true,
 }));
