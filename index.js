@@ -14,6 +14,22 @@ app.use(fileUpload());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
+// MySQL Database Connection
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error('Database connection failed: ' + err.stack);
+    return;
+  }
+  console.log('Connected to database');
+});
+
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -42,6 +58,64 @@ app.get('/login', (req, res) => {
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
+
+app.post('/register', async (req, res) => {
+  const { username, email, password, confirm_password } = req.body;
+
+  if (!username || !email || !password || !confirm_password) {
+    return res.status(400).send('All fields are required');
+  }
+
+  if (password !== confirm_password) {
+    return res.status(400).send('Passwords do not match');
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
+    db.query(sql, [username, email, hashedPassword], (err, result) => {
+      if (err) {
+        console.error('Error inserting into database: ' + err.message);
+        return res.status(500).send('Server error');
+      }
+      res.status(200).send('Registration successful');
+    });
+  } catch (error) {
+    console.error('Error hashing password: ' + error.message);
+    res.status(500).send('Server error');
+  }
+});
+
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required');
+  }
+
+  const sql = `SELECT * FROM users WHERE username = ?`;
+  db.query(sql, [username], async (err, results) => {
+    if (err) {
+      console.error('Error querying database: ' + err.message);
+      return res.status(500).send('Server error');
+    }
+
+    if (results.length === 0) {
+      return res.status(401).send('Invalid username or password');
+    }
+
+    const user = results[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).send('Invalid username or password');
+    }
+
+    res.status(200).send('Login successful');
+  });
+});
+
 
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
