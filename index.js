@@ -8,11 +8,9 @@ const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const path = require('path');
 const crypto = require('crypto'); // For generating unique filename
+const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
-const mongoose = require('mongoose');
-const User = require('./models/User');
-const { isAuthenticated } = require('./middleware/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -20,23 +18,36 @@ const port = process.env.PORT || 3000;
 app.use(fileUpload());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(session({
-  secret: 'your-secret-key',
-  resave: false,
-  saveUninitialized: false
-}));
+app.use(session({ secret: 'secret-key', resave: false, saveUninitialized: true }));
 
 // MongoDB Atlas connection URI
 const uri = 'mongodb+srv://vpsest:AGdWW4NiuKCyB2tz@burner.y3sscsv.mongodb.net/?retryWrites=true&w=majority&appName=burner'; // Replace with your MongoDB Atlas connection string
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected successfully to MongoDB Atlas'))
-  .catch(err => console.error('Failed to connect to MongoDB Atlas:', err));
+client.connect(err => {
+  if (err) {
+    console.error('Failed to connect to MongoDB Atlas:', err);
+    return;
+  }
+  console.log('Connected successfully to MongoDB Atlas');
+});
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+function isAuthenticated(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    res.redirect('/login');
+  }
+}
+
+app.get('/burn', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'service', 'burn.html'));
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
@@ -59,68 +70,58 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).send('Please fill in all fields.');
+  const { username, email, password, confirm_password } = req.body;
+
+  if (!username || !email || !password || !confirm_password) {
+    return res.status(400).send('All fields are required');
+  }
+
+  if (password !== confirm_password) {
+    return res.status(400).send('Passwords do not match');
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = new User({ email, password: hashedPassword });
+
+  const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
 
   try {
-    await user.save();
-    res.redirect('/login');
+    const result = await usersCollection.insertOne({ username, email, password: hashedPassword });
+    console.log('User registered successfully:', result.insertedId);
+    res.status(200).send('<script>window.location.href = "/login";</script>');
   } catch (error) {
-    res.status(400).send('User already exists.');
+    console.error('Error inserting into MongoDB Atlas:', error);
+    res.status(500).send('Server error');
   }
 });
 
 app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  console.log(`Login attempt with email: ${email}`);
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send('Username and password are required');
+  }
+
+  const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
 
   try {
-    const user = await User.findOne({ email });
-
+    const user = await usersCollection.findOne({ username });
     if (!user) {
-      console.log(`User with email ${email} not found.`);
-      return res.status(400).send('Invalid credentials.');
+      return res.status(401).send('Invalid username or password');
     }
-
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
-      console.log(`Invalid password for email: ${email}`);
-      return res.status(400).send('Invalid credentials.');
+      return res.status(401).send('Invalid username or password');
     }
 
-    req.session.userId = user._id;
-    res.redirect('/dashboard');
+    req.session.user = user;
+    res.status(200).send('<script>window.location.href = "/burn";</script>');
   } catch (error) {
-    console.error(`Login error: ${error.message}`);
-    res.status(500).send('Login failed. Please try again later.');
+    console.error('Error querying database:', error);
+    res.status(500).send('Server error');
   }
 });
 
-app.get('/dashboard', isAuthenticated, (req, res) => {
-  res.sendFile(__dirname + '/public/dashboard.html');
-});
-
-app.get('/burn', isAuthenticated, (req, res) => {
-  res.sendFile(__dirname + '/public/burn.html');
-});
-
-app.get('/api/encoding-history', isAuthenticated, async (req, res) => {
-  try {
-    const user = await User.findById(req.session.userId);
-    res.status(200).json({ history: user.encodingHistory });
-  } catch (error) {
-    console.error(`Error fetching encoding history: ${error}`);
-    res.status(500).send('Error fetching encoding history.');
-  }
-});
-
-app.post('/upload', isAuthenticated, async (req, res) => {
+app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
@@ -139,84 +140,91 @@ app.post('/upload', isAuthenticated, async (req, res) => {
   const logoPath = logoFile ? path.join(__dirname, `/uploads/logo_${uniqueId}.png`) : null;
   const outputPath = path.join(__dirname, '/uploads', outputFileName);
 
-  try {
-    await videoFile.mv(videoPath);
-    await subtitlesFile.mv(subtitlesPath);
-    if (logoFile) {
-      await logoFile.mv(logoPath);
-      await processVideoWithLogo();
-    } else {
-      await processVideoWithoutLogo();
+  videoFile.mv(videoPath, (err) => {
+    if (err) {
+      console.error(`Error: ${err.message}`);
+      return res.status(500).send('Error occurred while uploading the video.');
     }
 
-    res.send('Video processing started. You will receive an email once it is completed.');
-  } catch (err) {
-    console.error(`Error: ${err.message}`);
-    res.status(500).send('Error occurred during file upload or processing.');
-  }
-});
+    subtitlesFile.mv(subtitlesPath, (err) => {
+      if (err) {
+        console.error(`Error: ${err.message}`);
+        return res.status(500).send('Error occurred while uploading the subtitles.');
+      }
 
-const processVideoWithLogo = async () => {
-  const fontMapping = {
-    'Arial-Bold': 'Arial-Bold.ttf',
-    'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-    'Tungsten-Bold': 'Tungsten-Bold.ttf'
+      if (logoFile) {
+        logoFile.mv(logoPath, (err) => {
+          if (err) {
+            console.error(`Error: ${err.message}`);
+            return res.status(500).send('Error occurred while uploading the logo.');
+          }
+          processVideoWithLogo();
+        });
+      } else {
+        processVideoWithoutLogo();
+      }
+    });
+  });
+
+  const processVideoWithLogo = () => {
+    const fontMapping = {
+      'Arial-Bold': 'Arial-Bold.ttf',
+      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+      'Tungsten-Bold': 'Tungsten-Bold.ttf'
+    };
+
+    const selectedFontFile = fontMapping[selectedFont];
+
+    if (!selectedFontFile) {
+      return res.status(400).send('Selected font is not supported.');
+    }
+
+    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+    const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+      return res.status(400).send('Selected subtitle format is not supported.');
+    }
+
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+
+    executeFfmpeg(ffmpegCommand);
   };
 
-  const selectedFontFile = fontMapping[selectedFont];
+  const processVideoWithoutLogo = () => {
+    const fontMapping = {
+      'Arial-Bold': 'Arial-Bold.ttf',
+      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+      'Tungsten-Bold': 'Tungsten-Bold.ttf'
+    };
 
-  if (!selectedFontFile) {
-    return res.status(400).send('Selected font is not supported.');
-  }
+    const selectedFontFile = fontMapping[selectedFont];
 
-  const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+    if (!selectedFontFile) {
+      return res.status(400).send('Selected font is not supported.');
+    }
 
-  const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-  const acceptedSubtitleFormats = ['.srt', '.ass'];
+    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
-  if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-    return res.status(400).send('Selected subtitle format is not supported.');
-  }
+    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+    const acceptedSubtitleFormats = ['.srt', '.ass'];
 
-  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+      return res.status(400).send('Selected subtitle format is not supported.');
+    }
 
-  await executeFfmpeg(ffmpegCommand);
-};
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
-const processVideoWithoutLogo = async () => {
-  const fontMapping = {
-    'Arial-Bold': 'Arial-Bold.ttf',
-    'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-    'Tungsten-Bold': 'Tungsten-Bold.ttf'
+    executeFfmpeg(ffmpegCommand);
   };
 
-  const selectedFontFile = fontMapping[selectedFont];
-
-  if (!selectedFontFile) {
-    return res.status(400).send('Selected font is not supported.');
-  }
-
-  const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
-
-  const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-  const acceptedSubtitleFormats = ['.srt', '.ass'];
-
-  if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-    return res.status(400).send('Selected subtitle format is not supported.');
-  }
-
-  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
-
-  await executeFfmpeg(ffmpegCommand);
-};
-
-const executeFfmpeg = (command) => {
-  return new Promise((resolve, reject) => {
+  const executeFfmpeg = (command) => {
     const ffmpegProcess = exec(command);
 
     let totalFrames = 0;
     let processedFrames = 0;
-
     readline.createInterface({ input: ffmpegProcess.stderr })
       .on('line', (line) => {
         if (line.includes('frame=')) {
@@ -239,73 +247,55 @@ const executeFfmpeg = (command) => {
 
     ffmpegProcess.on('error', (error) => {
       console.error(`Error: ${error.message}`);
-      reject(new Error('Error occurred during video processing.'));
+      return res.status(500).send('Error occurred during video processing.');
     });
 
-    ffmpegProcess.on('exit', async () => {
-      try {
-        res.write('data: 100\n\n');
-        res.end();
+    ffmpegProcess.on('exit', () => {
+      res.write('data: 100\n\n');
+      res.end();;
 
-        // Save the encoding history to the database
-        const user = await User.findById(req.session.userId);
-        user.encodingHistory.push({
-          video: videoFile.name,
-          subtitles: subtitlesFile.name,
-          logo: logoFile ? logoFile.name : null,
-          outputFileName,
-          encodedAt: new Date(),
-          downloadLink: `/uploads/${outputFileName}`
-        });
-        await user.save();
+      // Construct the download link
+      const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
 
-        // Construct the download link
-        const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
+      // Send an email with the download link
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.Email,
+          pass: process.env.APP_KEY,
+        },
+      });
 
-        // Send an email with the download link
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false, // true for 465, false for other ports
-          auth: {
-            user: process.env.Email,
-            pass: process.env.APP_KEY,
-          },
-        });
+      const mailOptions = {
+        from: process.env.Email,
+        to: userEmail,
+        subject: 'Video Encoding Completed',
+        text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+      };
 
-        const mailOptions = {
-          from: process.env.Email,
-          to: userEmail,
-          subject: 'Video Encoding Completed',
-          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
-        };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error(`Email sending error: ${error}`);
+        } else {
+          console.log(`Email sent: ${info.response}`);
+        }
+      });
 
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error(`Email sending error: ${error}`);
+      // Delete the processed video after 24 hours
+      setTimeout(() => {
+        fs.unlink(outputPath, (err) => {
+          if (err) {
+            console.error(`Error deleting file: ${err}`);
           } else {
-            console.log(`Email sent: ${info.response}`);
+            console.log('Processed video deleted successfully after 24 hours.');
           }
         });
-
-        // Delete the processed video after 24 hours
-        setTimeout(() => {
-          fs.unlink(outputPath, (err) => {
-            if (err) {
-              console.error(`Error deleting file: ${err}`);
-            } else {
-              console.log('Processed video deleted successfully after 24 hours.');
-            }
-          });
-        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
-
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
+      }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
     });
-  });
-};
+  };
+});
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${port}`);
