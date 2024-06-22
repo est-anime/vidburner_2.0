@@ -111,7 +111,7 @@ app.get('/api/encoding-history', isAuthenticated, async (req, res) => {
   }
 });
 
-app.post('/upload', (req, res) => {
+app.post('/upload', isAuthenticated, async (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
@@ -130,91 +130,84 @@ app.post('/upload', (req, res) => {
   const logoPath = logoFile ? path.join(__dirname, `/uploads/logo_${uniqueId}.png`) : null;
   const outputPath = path.join(__dirname, '/uploads', outputFileName);
 
-  videoFile.mv(videoPath, (err) => {
-    if (err) {
-      console.error(`Error: ${err.message}`);
-      return res.status(500).send('Error occurred while uploading the video.');
+  try {
+    await videoFile.mv(videoPath);
+    await subtitlesFile.mv(subtitlesPath);
+    if (logoFile) {
+      await logoFile.mv(logoPath);
+      await processVideoWithLogo();
+    } else {
+      await processVideoWithoutLogo();
     }
 
-    subtitlesFile.mv(subtitlesPath, (err) => {
-      if (err) {
-        console.error(`Error: ${err.message}`);
-        return res.status(500).send('Error occurred while uploading the subtitles.');
-      }
+    res.send('Video processing started. You will receive an email once it is completed.');
+  } catch (err) {
+    console.error(`Error: ${err.message}`);
+    res.status(500).send('Error occurred during file upload or processing.');
+  }
+});
 
-      if (logoFile) {
-        logoFile.mv(logoPath, (err) => {
-          if (err) {
-            console.error(`Error: ${err.message}`);
-            return res.status(500).send('Error occurred while uploading the logo.');
-          }
-          processVideoWithLogo();
-        });
-      } else {
-        processVideoWithoutLogo();
-      }
-    });
-  });
-
-  const processVideoWithLogo = () => {
-    const fontMapping = {
-      'Arial-Bold': 'Arial-Bold.ttf',
-      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-      'Tungsten-Bold': 'Tungsten-Bold.ttf'
-    };
-
-    const selectedFontFile = fontMapping[selectedFont];
-
-    if (!selectedFontFile) {
-      return res.status(400).send('Selected font is not supported.');
-    }
-
-    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
-
-    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-    const acceptedSubtitleFormats = ['.srt', '.ass'];
-
-    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-      return res.status(400).send('Selected subtitle format is not supported.');
-    }
-
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
-
-    executeFfmpeg(ffmpegCommand);
+  const processVideoWithLogo = async () => {
+  const fontMapping = {
+    'Arial-Bold': 'Arial-Bold.ttf',
+    'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+    'Tungsten-Bold': 'Tungsten-Bold.ttf'
   };
 
-  const processVideoWithoutLogo = () => {
-    const fontMapping = {
-      'Arial-Bold': 'Arial-Bold.ttf',
-      'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
-      'Tungsten-Bold': 'Tungsten-Bold.ttf'
-    };
+  const selectedFontFile = fontMapping[selectedFont];
 
-    const selectedFontFile = fontMapping[selectedFont];
+  if (!selectedFontFile) {
+    return res.status(400).send('Selected font is not supported.');
+  }
 
-    if (!selectedFontFile) {
-      return res.status(400).send('Selected font is not supported.');
-    }
+  const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
-    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+  const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+  const acceptedSubtitleFormats = ['.srt', '.ass'];
 
-    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-    const acceptedSubtitleFormats = ['.srt', '.ass'];
+  if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+    return res.status(400).send('Selected subtitle format is not supported.');
+  }
 
-    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-      return res.status(400).send('Selected subtitle format is not supported.');
-    }
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
 
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+  await executeFfmpeg(ffmpegCommand);
+};
 
-    executeFfmpeg(ffmpegCommand);
+const processVideoWithoutLogo = async () => {
+  const fontMapping = {
+    'Arial-Bold': 'Arial-Bold.ttf',
+    'Juventus Fans Bold': 'Juventus-Fans-Bold.ttf',
+    'Tungsten-Bold': 'Tungsten-Bold.ttf'
   };
+
+  const selectedFontFile = fontMapping[selectedFont];
+
+  if (!selectedFontFile) {
+    return res.status(400).send('Selected font is not supported.');
+  }
+
+  const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+  const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+  const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+  if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+    return res.status(400).send('Selected subtitle format is not supported.');
+  }
+
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}'" "${outputPath}"`;
+
+  await executeFfmpeg(ffmpegCommand);
+};
 
   const executeFfmpeg = (command) => {
+  return new Promise((resolve, reject) => {
     const ffmpegProcess = exec(command);
 
     let totalFrames = 0;
     let processedFrames = 0;
+
     readline.createInterface({ input: ffmpegProcess.stderr })
       .on('line', (line) => {
         if (line.includes('frame=')) {
@@ -237,68 +230,74 @@ app.post('/upload', (req, res) => {
 
     ffmpegProcess.on('error', (error) => {
       console.error(`Error: ${error.message}`);
-      return res.status(500).send('Error occurred during video processing.');
+      reject(new Error('Error occurred during video processing.'));
     });
 
-    ffmpegProcess.on('exit', () => {
-      res.write('data: 100\n\n');
-      res.end();;
+    ffmpegProcess.on('exit', async () => {
+      try {
+        res.write('data: 100\n\n');
+        res.end();
 
-      // Construct the download link
-      const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
+        // Save the encoding history to the database
+        const user = await User.findById(req.session.userId);
+        user.encodingHistory.push({
+          video: videoFile.name,
+          subtitles: subtitlesFile.name,
+          logo: logoFile ? logoFile.name : null,
+          outputFileName,
+          encodedAt: new Date(),
+          downloadLink: `/uploads/${outputFileName}`
+        });
+        await user.save();
 
- // Save the encoding history to the database
-    const user = await User.findById(req.session.userId); // Assuming you have a User model and session management
-    user.encodingHistory.push({
-      video: videoFile.name,
-      subtitles: subtitlesFile.name,
-      logo: logoFile ? logoFile.name : null,
-      outputFileName,
-      encodedAt: new Date(),
-      downloadLink: `/uploads/${outputFileName}`
-    });
-    await user.save();
-      
-      // Send an email with the download link
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // true for 465, false for other ports
-        auth: {
-          user: process.env.Email,
-          pass: process.env.APP_KEY,
-        },
-      });
+        // Construct the download link
+        const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
 
-      const mailOptions = {
-        from: process.env.Email,
-        to: userEmail,
-        subject: 'Video Encoding Completed',
-        text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
-      };
+        // Send an email with the download link
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false, // true for 465, false for other ports
+          auth: {
+            user: process.env.Email,
+            pass: process.env.APP_KEY,
+          },
+        });
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error(`Email sending error: ${error}`);
-        } else {
-          console.log(`Email sent: ${info.response}`);
-        }
-      });
+        const mailOptions = {
+          from: process.env.Email,
+          to: userEmail,
+          subject: 'Video Encoding Completed',
+          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+        };
 
-      // Delete the processed video after 24 hours
-      setTimeout(() => {
-        fs.unlink(outputPath, (err) => {
-          if (err) {
-            console.error(`Error deleting file: ${err}`);
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error(`Email sending error: ${error}`);
           } else {
-            console.log('Processed video deleted successfully after 24 hours.');
+            console.log(`Email sent: ${info.response}`);
           }
         });
-      }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
-    });
-  };
-});
 
+        // Delete the processed video after 24 hours
+        setTimeout(() => {
+          fs.unlink(outputPath, (err) => {
+            if (err) {
+              console.error(`Error deleting file: ${err}`);
+            } else {
+              console.log('Processed video deleted successfully after 24 hours.');
+            }
+          });
+        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+};
+  
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${port}`);
 });
