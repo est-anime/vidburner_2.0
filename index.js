@@ -251,18 +251,6 @@ app.post('/upload', (req, res) => {
 
       // Construct the download link
       const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
-
- // Save the encoding history to the database
-        const user = await User.findById(req.session.userId); // Assuming you have a User model and session management
-        user.encodingHistory.push({
-          video: videoFile.name,
-          subtitles: subtitlesFile.name,
-          logo: logoFile ? logoFile.name : null,
-          outputFileName,
-          encodedAt: new Date(),
-          downloadLink: `/uploads/${outputFileName}`
-        });
-        await user.save();
       
       // Send an email with the download link
       const transporter = nodemailer.createTransport({
