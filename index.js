@@ -133,7 +133,7 @@ app.post('/login', async (req, res) => {
   app.get('/history', isAuthenticated, async (req, res) => {
     const userId = req.session.user._id; // Assuming your user document has an _id field
     try {
-      const history = await historyCollection.find({ userId: ObjectID(userId) }).toArray();
+      const history = await historyCollection.find({ userId: new ObjectId(userId) }).toArray(); // Use new ObjectId(userId)
       res.json(history);
     } catch (error) {
       console.error('Error fetching history from MongoDB:', error);
