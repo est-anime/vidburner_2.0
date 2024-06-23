@@ -32,6 +32,9 @@ client.connect(err => {
   console.log('Connected successfully to MongoDB Atlas');
 });
 
+const db = client.db('burner');
+const historyCollection = db.collection('history');
+
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -126,7 +129,7 @@ app.post('/login', async (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
   });
 
-  // Endpoint to fetch encoding history for the authenticated user
+// Endpoint to fetch encoding history for the authenticated user
   app.get('/history', isAuthenticated, async (req, res) => {
     const userId = req.session.user._id; // Assuming your user document has an _id field
     try {
