@@ -303,22 +303,6 @@ app.post('/upload', (req, res) => {
         }
       });
 
-      // Save encoding history
-    try {
-      const userId = req.session.user._id;
-      await historyCollection.insertOne({
-        userId: new ObjectId(userId),
-        videoPath: videoPath,
-        subtitlesPath: subtitlesPath,
-        logoPath: logoPath,
-        outputPath: outputPath,
-        timestamp: new Date()
-      });
-      console.log('Encoding history saved successfully.');
-    } catch (error) {
-      console.error('Error saving encoding history:', error);
-    }
-
       // Delete the processed video after 24 hours
       setTimeout(() => {
         fs.unlink(outputPath, (err) => {
