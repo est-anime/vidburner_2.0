@@ -11,7 +11,11 @@ const crypto = require('crypto'); // For generating unique filename
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const dotenv = require('dotenv');
 const axios = require('axios'); // For making HTTP requests
+
+// Load environment variables from .env file
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
