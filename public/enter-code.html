@@ -59,5 +59,18 @@
             <button type="submit" class="button">Submit</button>
         </form>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/enter-code')
+                .then(response => response.text())
+                .then(data => {
+                    if (data.startsWith('You are already a premium user!')) {
+                        document.getElementById('premiumMessage').textContent = 'You are already a premium user!';
+                        document.getElementById('codeForm').style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error fetching user premium status:', error));
+        });
+    </script>
 </body>
 </html>
