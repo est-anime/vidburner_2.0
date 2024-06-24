@@ -158,7 +158,7 @@ app.get('/history', ensureAuthenticated, async (req, res) => {
   }
 });
 
-app.post('/upload', (req, res) => {
+app.post('/upload', isAuthenticated, (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
@@ -169,6 +169,7 @@ app.post('/upload', (req, res) => {
   const outputFileName = req.body.outputFileName || 'output.mp4';
   const userEmail = req.body.email;
   const logoFile = req.files.logo;
+  const userId = req.session.user._id; // Get the user ID from the session
 
   // Generate unique filenames for the uploaded files
   const uniqueId = crypto.randomBytes(16).toString('hex');
@@ -287,9 +288,24 @@ app.post('/upload', (req, res) => {
       return res.status(500).send('Error occurred during video processing.');
     });
 
-    ffmpegProcess.on('exit', () => {
+    ffmpegProcess.on('exit', async () => {
       res.write('data: 100\n\n');
-      res.end();;
+      res.end();
+
+      // Insert encoding history into the database
+      const historyItem = {
+        userId: new ObjectId(userId),
+        fileName: outputFileName,
+        status: 'Completed',
+        timestamp: new Date()
+      };
+
+      try {
+        await historyCollection.insertOne(historyItem);
+        console.log('Encoding history inserted successfully');
+      } catch (error) {
+        console.error('Error inserting encoding history:', error);
+      }
 
       // Construct the download link
       const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
@@ -332,8 +348,4 @@ app.post('/upload', (req, res) => {
       }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
     });
   };
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${port}`);
 });
