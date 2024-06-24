@@ -248,20 +248,24 @@ app.get('/enter-code', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'enter-code.html'));
 });
 
-app.post('/enter-code', async (req, res) => {
+app.post('/enter-code', ensureAuthenticated, async (req, res) => {
   const { code } = req.body;
 
   try {
+    console.log('Received code:', code);
     const premiumCode = await codesCollection.findOne({ code, used: false });
+    console.log('Found premium code:', premiumCode);
     if (!premiumCode) {
       return res.status(400).send('Invalid or already used code');
     }
 
-    await usersCollection.updateOne(
-      { _id: req.session.user._id },
+    const updateResult = await usersCollection.updateOne(
+      { _id: new ObjectId(req.session.user._id) },
       { $set: { isPremium: true }, $unset: { minutesUsed: "" } }
     );
-    await codesCollection.updateOne({ code }, { $set: { used: true } });
+    console.log('User update result:', updateResult);
+    const codeUpdateResult = await codesCollection.updateOne({ code }, { $set: { used: true } });
+    console.log('Code update result:', codeUpdateResult);
 
     res.status(200).send('You are now a premium user!');
   } catch (error) {
