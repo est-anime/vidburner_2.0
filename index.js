@@ -243,6 +243,33 @@ app.post('/encode', ensureAuthenticated, async (req, res) => {
   }
   });
 
+// Serve the enter-code.html file
+app.get('/enter-code', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'enter-code.html'));
+});
+
+app.post('/enter-code', async (req, res) => {
+  const { code } = req.body;
+
+  try {
+    const premiumCode = await codesCollection.findOne({ code, used: false });
+    if (!premiumCode) {
+      return res.status(400).send('Invalid or already used code');
+    }
+
+    await usersCollection.updateOne(
+      { _id: req.session.user._id },
+      { $set: { isPremium: true }, $unset: { minutesUsed: "" } }
+    );
+    await codesCollection.updateOne({ code }, { $set: { used: true } });
+
+    res.status(200).send('You are now a premium user!');
+  } catch (error) {
+    console.error('Error upgrading user to premium:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 app.post('/upload', isAuthenticated, (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
