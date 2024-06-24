@@ -48,7 +48,32 @@ function isAuthenticated(req, res, next) {
   }
 }
 
-app.get('/burn', isAuthenticated, (req, res) => {
+// Middleware to check if user is already authenticated
+function checkAuthenticated(req, res, next) {
+  if (req.session.user) {
+    return res.redirect('/burn');
+  }
+  next();
+}
+
+// Middleware to ensure user is authenticated
+function ensureAuthenticated(req, res, next) {
+  if (req.session.user) {
+    return next();
+  }
+  res.redirect('/login');
+}
+
+// Routes for login and register pages
+app.get('/login', checkAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/register', checkAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+app.get('/burn', ensureAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'service', 'burn.html'));
 });
 
@@ -64,14 +89,6 @@ app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'contact.html'));
 });
 
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
 app.post('/register', async (req, res) => {
   const { username, email, password, confirm_password } = req.body;
 
@@ -85,7 +102,7 @@ app.post('/register', async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
+  const usersCollection = client.db('burner').collection('users');
 
   try {
     const result = await usersCollection.insertOne({ username, email, password: hashedPassword });
@@ -104,7 +121,7 @@ app.post('/login', async (req, res) => {
     return res.status(400).send('Username and password are required');
   }
 
-  const usersCollection = client.db('burner').collection('users'); // Replace with your collection name
+  const usersCollection = client.db('burner').collection('users');
 
   try {
     const user = await usersCollection.findOne({ username });
@@ -117,7 +134,7 @@ app.post('/login', async (req, res) => {
     }
 
     req.session.user = user;
-    res.status(200).send('<script>window.location.href = "/burn";</script>');
+    res.status(200).redirect('/burn'); // Redirect to burn page after successful login
   } catch (error) {
     console.error('Error querying database:', error);
     res.status(500).send('Server error');
@@ -125,21 +142,21 @@ app.post('/login', async (req, res) => {
 });
 
 // Route to serve the dashboard
-  app.get('/dashboard', isAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-  });
+app.get('/dashboard', ensureAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
 
 // Endpoint to fetch encoding history for the authenticated user
-  app.get('/history', isAuthenticated, async (req, res) => {
-    const userId = req.session.user._id; // Assuming your user document has an _id field
-    try {
-      const history = await historyCollection.find({ userId: new ObjectId(userId) }).toArray(); // Use new ObjectId(userId)
-      res.json(history);
-    } catch (error) {
-      console.error('Error fetching history from MongoDB:', error);
-      res.status(500).send('Error fetching history');
-    }
-  });
+app.get('/history', ensureAuthenticated, async (req, res) => {
+  const userId = req.session.user._id; // Assuming your user document has an _id field
+  try {
+    const history = await historyCollection.find({ userId: new ObjectId(userId) }).toArray();
+    res.json(history);
+  } catch (error) {
+    console.error('Error fetching history from MongoDB:', error);
+    res.status(500).send('Error fetching history');
+  }
+});
 
 app.post('/upload', (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
