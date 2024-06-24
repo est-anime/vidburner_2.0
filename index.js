@@ -163,6 +163,86 @@ app.get('/history', ensureAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/admin-login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
+});
+
+app.post('/admin-login', (req, res) => {
+  const { username, password } = req.body;
+
+  if (username === 'admin' && password === 'jake@100') {
+    req.session.admin = true;
+    res.redirect('/admin');
+  } else {
+    res.status(401).send('Invalid credentials');
+  }
+});
+
+app.get('/admin', (req, res) => {
+  if (req.session.admin) {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  } else {
+    res.redirect('/admin-login');
+  }
+});
+
+app.post('/admin/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/admin-login');
+});
+
+app.post('/admin/generate-code', (req, res) => {
+  if (!req.session.admin) {
+    return res.status(401).send('Unauthorized');
+  }
+
+  const code = crypto.randomBytes(8).toString('hex');
+
+  db.collection('codes').insertOne({ code, used: false })
+    .then(result => res.json({ code }))
+    .catch(error => res.status(500).send('Error generating code'));
+});
+
+app.post('/submit-code', ensureAuthenticated, async (req, res) => {
+  const { code } = req.body;
+  const userId = req.session.user._id;
+
+  try {
+    const codeDoc = await db.collection('codes').findOne({ code, used: false });
+
+    if (!codeDoc) {
+      return res.status(400).json({ success: false, message: 'Invalid or already used code' });
+    }
+
+    await db.collection('codes').updateOne({ _id: codeDoc._id }, { $set: { used: true } });
+    await usersCollection.updateOne({ _id: new ObjectId(userId) }, { $set: { isPremium: true } });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error processing code:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+app.post('/encode', ensureAuthenticated, async (req, res) => {
+  const userId = req.session.user._id;
+  const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+  const currentDate = new Date();
+  const currentDateString = currentDate.toISOString().split('T')[0];
+
+  const encodedToday = await historyCollection.countDocuments({
+    userId: new ObjectId(userId),
+    timestamp: { $gte: new Date(`${currentDateString}T00:00:00.000Z`), $lte: new Date(`${currentDateString}T23:59:59.999Z`) }
+  });
+
+  const maxMinutes = user.isPremium ? 100 : 24;
+
+  if (encodedToday >= maxMinutes) {
+    return res.status(403).send(`You have reached your daily limit of ${maxMinutes} minutes.`);
+  }
+  });
+
 app.post('/upload', isAuthenticated, (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
