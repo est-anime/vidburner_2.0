@@ -35,6 +35,9 @@ client.connect(err => {
 
 const db = client.db('burner');
 const historyCollection = db.collection('history');
+const usersCollection = db.collection('users');
+const codesCollection = db.collection('codes'); // Define codesCollection here
+
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -244,35 +247,35 @@ app.post('/encode', ensureAuthenticated, async (req, res) => {
   });
 
 // Serve the enter-code.html file
-app.get('/enter-code', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'enter-code.html'));
-});
+  app.get('/enter-code', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'enter-code.html'));
+  });
 
-app.post('/enter-code', ensureAuthenticated, async (req, res) => {
-  const { code } = req.body;
+  app.post('/enter-code', ensureAuthenticated, async (req, res) => {
+    const { code } = req.body;
 
-  try {
-    console.log('Received code:', code);
-    const premiumCode = await codesCollection.findOne({ code, used: false });
-    console.log('Found premium code:', premiumCode);
-    if (!premiumCode) {
-      return res.status(400).send('Invalid or already used code');
+    try {
+      console.log('Received code:', code);
+      const premiumCode = await codesCollection.findOne({ code, used: false });
+      console.log('Found premium code:', premiumCode);
+      if (!premiumCode) {
+        return res.status(400).send('Invalid or already used code');
+      }
+
+      const updateResult = await usersCollection.updateOne(
+        { _id: new ObjectId(req.session.user._id) },
+        { $set: { isPremium: true }, $unset: { minutesUsed: "" } }
+      );
+      console.log('User update result:', updateResult);
+      const codeUpdateResult = await codesCollection.updateOne({ code }, { $set: { used: true } });
+      console.log('Code update result:', codeUpdateResult);
+
+      res.status(200).send('You are now a premium user!');
+    } catch (error) {
+      console.error('Error upgrading user to premium:', error);
+      res.status(500).send('Server error');
     }
-
-    const updateResult = await usersCollection.updateOne(
-      { _id: new ObjectId(req.session.user._id) },
-      { $set: { isPremium: true }, $unset: { minutesUsed: "" } }
-    );
-    console.log('User update result:', updateResult);
-    const codeUpdateResult = await codesCollection.updateOne({ code }, { $set: { used: true } });
-    console.log('Code update result:', codeUpdateResult);
-
-    res.status(200).send('You are now a premium user!');
-  } catch (error) {
-    console.error('Error upgrading user to premium:', error);
-    res.status(500).send('Server error');
-  }
-});
+  });
 
 app.post('/upload', isAuthenticated, (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
