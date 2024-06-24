@@ -1,135 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>User Dashboard - Videoburner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Favicon -->
-  <link rel="icon" href="img/logo.png" type="image/x-icon">
-  <style>
-    :root {
-      --primary-color: #007bff;
-      --secondary-color: #64ffda;
-      --background-color: #121212;
-      --text-color: #ffffff;
-      --font-family: 'Roboto', sans-serif;
-    }
-
-    body {
-      background-color: var(--background-color);
-      color: var(--text-color);
-      font-family: var(--font-family);
-      margin: 0;
-      padding: 0;
-    }
-    
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      text-align: center;
-    }
-
-    header {
-      background-color: var(--primary-color);
-      color: var(--text-color);
-      text-align: center;
-      padding: 10px 0;
-      margin-bottom: 20px;
-    }
-
-    header h1 {
-      font-size: 2em;
-      margin: 0;
-    }
-
-    header img {
-      height: 50px; /* Adjust height as needed */
-      width: auto; /* Maintain aspect ratio */
-      margin-right: 10px;
-      cursor: pointer;
-    }
-
-    .history {
-      margin-top: 20px;
-      text-align: left;
-    }
-
-    .history ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .history ul li {
-      background-color: rgba(255, 255, 255, 0.1);
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 4px;
-    }
-
-    .history ul li:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .history ul li span {
-      font-weight: bold;
-    }
-
-    footer {
-      margin-top: 20px;
-      background-color: var(--primary-color);
-      color: var(--text-color);
-      text-align: center;
-      padding: 10px 0;
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>User Dashboard</h1>
-    <a href="/" style="text-decoration: none; color: var(--text-color); float: left; margin-left: 10px;"><img src="img/user.png" alt="User Dashboard"></a>
-  </header>
-  
-  <div class="container">
-    <div class="history">
-      <h2>Encoding History</h2>
-      <ul id="historyList">
-        <!-- History items will be dynamically inserted here -->
-      </ul>
-    </div>
-  </div>
-  
-  <footer>
-    <p>&copy; 2024 Videoburner. All rights reserved.</p>
-  </footer>
-   <script>
-    // Fetch encoding history and populate the list
-    async function fetchHistory() {
-      try {
-        const response = await fetch('/history'); // Endpoint to fetch user's encoding history
-        if (!response.ok) {
-          throw new Error('Failed to fetch history');
-        }
-        const history = await response.json();
-        const historyList = document.getElementById('historyList');
-        historyList.innerHTML = ''; // Clear existing list items
-        history.forEach(item => {
-          const li = document.createElement('li');
-          li.className = 'history-item';
-          li.innerHTML = `<span>${item.fileName}</span>: ${item.status}`;
-          historyList.appendChild(li);
-        });
-      } catch (error) {
-        console.error('Error fetching history:', error);
-      }
-    }
+    <h1>Encoding History</h1>
+    <table id="historyTable">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 
-    // Call fetchHistory when the page loads
-    fetchHistory();
-  </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/history')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('historyTable').querySelector('tbody');
+                    data.forEach(item => {
+                        const row = document.createElement('tr');
+                        const fileNameCell = document.createElement('td');
+                        const statusCell = document.createElement('td');
+                        const timestampCell = document.createElement('td');
+
+                        fileNameCell.textContent = item.fileName;
+                        statusCell.textContent = item.status;
+                        timestampCell.textContent = new Date(item.timestamp).toLocaleString();
+
+                        row.appendChild(fileNameCell);
+                        row.appendChild(statusCell);
+                        row.appendChild(timestampCell);
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching history:', error));
+        });
+    </script>
 </body>
 </html>
