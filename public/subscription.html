@@ -4,55 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subscription Plans</title>
-   </head>
-  <style>
-    .container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    text-align: center;
-}
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
 
-.plans {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 20px;
-}
+        .plans {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
 
-.plan {
-    width: 45%;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
+        .plan {
+            width: 45%;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
 
-.plan h2 {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-}
+        .plan h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
 
-.plan p {
-    color: #666;
-    margin-bottom: 20px;
-}
+        .plan p {
+            color: #666;
+            margin-bottom: 20px;
+        }
 
-button {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    font-size: 1rem;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
 
-button:hover {
-    background-color: #0056b3;
-}
-  </style>
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .enter-code-button {
+            margin-top: 20px;
+        }
+    </style>
+</head>
 <body>
     <div class="container">
         <h1>Choose a Subscription Plan</h1>
@@ -65,11 +69,13 @@ button:hover {
             <div class="plan">
                 <h2>Premium Plan</h2>
                 <p>100 minutes of video encoding per day</p>
-                <button onclick="window.location.href='/img/pay.jpg'">Subscribe for Free</button>
+                <button onclick="purchaseSubscription('premium')">Subscribe for Premium</button>
             </div>
         </div>
-    </div>
 
+        <div class="enter-code-button">
+            <button onclick="window.location.href='/enter-code'">Enter Code</button>
+        </div>
     <script>
         async function purchaseSubscription(plan) {
             try {
