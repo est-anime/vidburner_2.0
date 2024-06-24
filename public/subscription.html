@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscription Plans</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+    }
+    header, footer {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    header h1, footer p {
+      margin: 0;
+    }
+    .plan {
+      border: 1px solid #444;
+      padding: 20px;
+      margin: 20px 0;
+      background-color: #1e1e1e;
+    }
+    .plan h2 {
+      color: #b71c1c;
+    }
+    .plan button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      background-color: #b71c1c;
+      color: #e0e0e0;
+      border: none;
+      cursor: pointer;
+    }
+    .plan button:hover {
+      background-color: #e53935;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Subscription Plans</h1>
+  </header>
+  <div class="container">
+    <div class="plan">
+      <h2>Basic Plan</h2>
+      <p>Price: ₹100 for 30 days</p>
+      <button onclick="subscribe('basic')">Subscribe</button>
+    </div>
+    <div class="plan">
+      <h2>Premium Plan</h2>
+      <p>Price: ₹200 for 90 days</p>
+      <button onclick="subscribe('premium')">Subscribe</button>
+    </div>
+  </div>
+  <footer>
+    <p>&copy; 2024 Your Company. All rights reserved.</p>
+  </footer>
+
+  <script>
+    function subscribe(planId) {
+      fetch('/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ planId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.paymentLink) {
+          window.location.href = data.paymentLink;
+        } else {
+          alert('Failed to initiate payment. Please try again.');
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    }
+  </script>
+</body>
+</html>
