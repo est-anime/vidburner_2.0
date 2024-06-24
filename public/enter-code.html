@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter Code</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+    }
+    header, footer {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    header h1, footer p {
+      margin: 0;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 80%;
+      margin-top: 20px;
+    }
+    .button {
+      padding: 10px 20px;
+      background-color: #b71c1c;
+      color: #e0e0e0;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .button:hover {
+      background-color: #e53935;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Enter Code</h1>
+  </header>
+  <div class="container">
+    <input type="text" id="code" placeholder="Enter your code">
+    <button class="button" onclick="submitCode()">Submit</button>
+  </div>
+  <footer>
+    <p>&copy; 2024 Your Company. All rights reserved.</p>
+  </footer>
+
+  <script>
+    function submitCode() {
+      const code = document.getElementById('code').value;
+      fetch('/submit-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('You are now a premium user!');
+          window.location.href = '/burn';
+        } else {
+          alert('Invalid or already used code');
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    }
+  </script>
+</body>
+</html>
