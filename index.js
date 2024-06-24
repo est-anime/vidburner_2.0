@@ -11,6 +11,7 @@ const crypto = require('crypto'); // For generating unique filename
 const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const axios = require('axios'); // For making HTTP requests
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -75,6 +76,10 @@ app.get('/register', checkAuthenticated, (req, res) => {
 
 app.get('/burn', ensureAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'service', 'burn.html'));
+});
+
+app.get('/subscription', ensureAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'subscription.html'));
 });
 
 app.get('/', (req, res) => {
