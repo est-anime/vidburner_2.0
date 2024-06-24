@@ -173,7 +173,7 @@ app.get('/admin-login', (req, res) => {
 app.post('/admin-login', (req, res) => {
   const { username, password } = req.body;
 
-  if (username === 'admin' && password === 'jake@100') {
+  if (username = process.env.admin && password = process.env.password) {
     req.session.admin = true;
     res.redirect('/admin');
   } else {
