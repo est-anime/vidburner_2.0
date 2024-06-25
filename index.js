@@ -465,7 +465,8 @@ app.post('/upload', isAuthenticated, (req, res) => {
     ffmpegProcess.on('exit', async () => {
       res.write('data: 100\n\n');
       res.end();
-      
+
+      const downloadLinks = `http://${req.hostname}/uploads/${outputFileName}`;      
       const expirationTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
       
       // Insert encoding history into the database
@@ -474,7 +475,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
         fileName: outputFileName,
         status: 'Completed',
         timestamp: new Date(),
-        downloadLink: downloadLink,
+        downloadLinks: downloadLinks,
         linkExpiration: expirationTime
       };
 
