@@ -394,6 +394,11 @@ app.post('/upload', isAuthenticated, (req, res) => {
 
     const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
+    // Check if the font file exists
+    if (!fs.existsSync(fullFontPath)) {
+      return res.status(400).send('Selected font file does not exist.');
+    }
+
     const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
     const acceptedSubtitleFormats = ['.srt', '.ass'];
 
@@ -403,7 +408,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
 
     const resolution = quality === '480p' ? '640x480' : '1280x720';
 
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}',scale=${resolution}" "${outputPath}"`;
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFont}',scale=${resolution}" "${outputPath}"`;
 
     executeFfmpeg(ffmpegCommand);
   };
@@ -423,6 +428,11 @@ app.post('/upload', isAuthenticated, (req, res) => {
 
     const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
+    // Check if the font file exists
+    if (!fs.existsSync(fullFontPath)) {
+      return res.status(400).send('Selected font file does not exist.');
+    }
+
     const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
     const acceptedSubtitleFormats = ['.srt', '.ass'];
 
@@ -432,7 +442,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
 
     const resolution = quality === '480p' ? '640x480' : '1280x720';
 
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${fullFontPath}',scale=${resolution}" "${outputPath}"`;
+    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFont}',scale=${resolution}" "${outputPath}"`;
 
     executeFfmpeg(ffmpegCommand);
   };
