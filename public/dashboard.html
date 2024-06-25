@@ -59,6 +59,7 @@
                     <th>File Name</th>
                     <th>Status</th>
                     <th>Timestamp</th>
+                    <th>Download Link</th>
                 </tr>
             </thead>
             <tbody>
@@ -69,7 +70,6 @@
     <footer>
         <p>&copy; 2024 Vidburner. All rights reserved.</p>
     </footer>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             fetch('/history')
@@ -81,14 +81,24 @@
                         const fileNameCell = document.createElement('td');
                         const statusCell = document.createElement('td');
                         const timestampCell = document.createElement('td');
+                        const downloadLinkCell = document.createElement('td');
 
                         fileNameCell.textContent = item.fileName;
                         statusCell.textContent = item.status;
                         timestampCell.textContent = new Date(item.timestamp).toLocaleString();
+                        if (new Date() <= new Date(item.linkExpiration)) {
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = `/download/${item.fileName}`;
+                            downloadLink.textContent = 'Download';
+                            downloadLinkCell.appendChild(downloadLink);
+                        } else {
+                            downloadLinkCell.textContent = 'Expired';
+                        }
 
                         row.appendChild(fileNameCell);
                         row.appendChild(statusCell);
                         row.appendChild(timestampCell);
+                        row.appendChild(downloadLinkCell);
                         tbody.appendChild(row);
                     });
                 })
