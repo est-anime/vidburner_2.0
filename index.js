@@ -194,6 +194,29 @@ app.get('/admin', (req, res) => {
   }
 });
 
+app.get('/download/:fileName', async (req, res) => {
+  const fileName = req.params.fileName;
+
+  try {
+    const historyEntry = await historyCollection.findOne({ fileName: fileName });
+
+    if (!historyEntry) {
+      return res.status(404).send('File not found');
+    }
+
+    const currentTime = new Date();
+    if (currentTime > historyEntry.linkExpiration) {
+      return res.status(410).send('Link has expired');
+    }
+
+    const filePath = path.join(__dirname, 'uploads', fileName);
+    res.download(filePath);
+  } catch (error) {
+    console.error('Error fetching file for download:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 app.post('/admin/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/admin-login');
@@ -443,12 +466,17 @@ app.post('/upload', isAuthenticated, (req, res) => {
       res.write('data: 100\n\n');
       res.end();
 
+      const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
+      const expirationTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+      
       // Insert encoding history into the database
       const historyItem = {
         userId: new ObjectId(userId),
         fileName: outputFileName,
         status: 'Completed',
-        timestamp: new Date()
+        timestamp: new Date(),
+        downloadLink: downloadLink,
+        linkExpiration: expirationTime
       };
 
       try {
