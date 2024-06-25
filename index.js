@@ -392,7 +392,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
       return res.status(400).send('Selected font is not supported.');
     }
 
-    const fullFontPath = path.join(__dirname, 'public', selectedFontFile);
+    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
     // Check if the font file exists
     if (!fs.existsSync(fullFontPath)) {
@@ -426,7 +426,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
       return res.status(400).send('Selected font is not supported.');
     }
 
-    const fullFontPath = path.join(__dirname, 'public', selectedFontFile);
+    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
     // Check if the font file exists
     if (!fs.existsSync(fullFontPath)) {
