@@ -392,7 +392,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
       return res.status(400).send('Selected font is not supported.');
     }
 
-    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+    const fullFontPath = path.join(__dirname, '/usr/share/fonts/truetype/arial/', selectedFontFile);
 
     // Check if the font file exists
     if (!fs.existsSync(fullFontPath)) {
@@ -415,7 +415,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
 
   const processVideoWithoutLogo = () => {
     const fontMapping = {
-      'Arial-Bold': '/usr/share/fonts/truetype/arial/arialbd.ttf',
+      'Arial-Bold': 'arialbd.ttf',
       'Juventus Fans Bold': 'Juventus Fans Bold.ttf',
       'Tungsten-Bold': 'Tungsten Bold.ttf'
     };
@@ -426,7 +426,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
       return res.status(400).send('Selected font is not supported.');
     }
 
-    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+    const fullFontPath = path.join(__dirname, '/usr/share/fonts/truetype/arial/', selectedFontFile);
 
     // Check if the font file exists
     if (!fs.existsSync(fullFontPath)) {
