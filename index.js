@@ -434,7 +434,7 @@ const processVideoWithoutLogo = () => {
   }
 
   const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-  const acceptedSubtitleFormats are ['.srt', '.ass'];
+  const acceptedSubtitleFormats = ['.srt', '.ass'];
 
   if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
     return res.status(400).send('Selected subtitle format is not supported.');
