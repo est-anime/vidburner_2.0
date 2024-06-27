@@ -408,7 +408,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
 
   const resolution = quality === '480p' ? '640x480' : '1280x720';
 
-  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles='${subtitlesPath}:force_style=FontName=${selectedFont}',scale=${resolution}" "${outputPath}"`;
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" "${outputPath}"`;
 
   executeFfmpeg(ffmpegCommand);
 };
@@ -434,7 +434,7 @@ const processVideoWithoutLogo = () => {
   }
 
   const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-  const acceptedSubtitleFormats = ['.srt', '.ass'];
+  const acceptedSubtitleFormats are ['.srt', '.ass'];
 
   if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
     return res.status(400).send('Selected subtitle format is not supported.');
@@ -442,7 +442,7 @@ const processVideoWithoutLogo = () => {
 
   const resolution = quality === '480p' ? '640x480' : '1280x720';
 
-  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles='${subtitlesPath}:force_style=FontName=${selectedFont}',scale=${resolution}" "${outputPath}"`;
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" "${outputPath}"`;
 
   executeFfmpeg(ffmpegCommand);
 };
