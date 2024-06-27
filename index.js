@@ -382,7 +382,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
   const processVideoWithLogo = () => {
     const fontMapping = {
       'Arial-Bold': 'arialbd.ttf',
-      'Juventus Fans Bold': 'jfb.ttf',
+      'Helvetica Bold': 'helvetica.ttf',
       'Tungsten-Bold': 'tb.ttf'
     };
 
@@ -416,7 +416,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
   const processVideoWithoutLogo = () => {
     const fontMapping = {
       'Arial-Bold': 'arialbd.ttf',
-      'Juventus Fans Bold': 'jfb.ttf',
+      'Helvetica Bold': 'helvetica.ttf',
       'Tungsten-Bold': 'tb.ttf'
     };
 
