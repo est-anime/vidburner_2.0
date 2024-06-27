@@ -382,8 +382,8 @@ app.post('/upload', isAuthenticated, (req, res) => {
   const processVideoWithLogo = () => {
     const fontMapping = {
       'Arial-Bold': 'arialbd.ttf',
-      'Juventus Fans Bold': 'Juventus Fans Bold.ttf',
-      'Tungsten-Bold': 'Tungsten Bold.ttf'
+      'Juventus Fans Bold': 'jfb.ttf',
+      'Tungsten-Bold': 'tb.ttf'
     };
 
     const selectedFontFile = fontMapping[selectedFont];
