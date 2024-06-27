@@ -381,9 +381,9 @@ app.post('/upload', isAuthenticated, (req, res) => {
 
   const processVideoWithLogo = () => {
     const fontMapping = {
-      'Arial-Bold': 'arialbd.ttf',
-      'Juventus Fans Bold': 'Juventus Fans Bold.ttf',
-      'Tungsten-Bold': 'Tungsten Bold.ttf'
+      'Arial-Bold': '/fonts/arialbd.ttf',
+      'Juventus Fans Bold': '/fonts/Juventus Fans Bold.ttf',
+      'Tungsten-Bold': '/fonts/Tungsten Bold.ttf'
     };
 
     const selectedFontFile = fontMapping[selectedFont];
@@ -415,9 +415,9 @@ app.post('/upload', isAuthenticated, (req, res) => {
 
   const processVideoWithoutLogo = () => {
     const fontMapping = {
-      'Arial-Bold': 'arialbd.ttf',
-      'Juventus Fans Bold': 'Juventus Fans Bold.ttf',
-      'Tungsten-Bold': 'Tungsten Bold.ttf'
+      'Arial-Bold': '/fonts/arialbd.ttf',
+      'Juventus Fans Bold': '/fonts/Juventus Fans Bold.ttf',
+      'Tungsten-Bold': '/fonts/Tungsten Bold.ttf'
     };
 
     const selectedFontFile = fontMapping[selectedFont];
