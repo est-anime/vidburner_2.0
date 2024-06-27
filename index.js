@@ -380,72 +380,72 @@ app.post('/upload', isAuthenticated, (req, res) => {
   });
 
   const processVideoWithLogo = () => {
-    const fontMapping = {
-      'Arial-Bold': 'arialbd.ttf',
-      'Helvetica Bold': 'helvetica.ttf',
-      'Tungsten-Bold': 'tb.ttf'
-    };
-
-    const selectedFontFile = fontMapping[selectedFont];
-
-    if (!selectedFontFile) {
-      return res.status(400).send('Selected font is not supported.');
-    }
-
-    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
-
-    // Check if the font file exists
-    if (!fs.existsSync(fullFontPath)) {
-      return res.status(400).send('Selected font file does not exist.');
-    }
-
-    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-    const acceptedSubtitleFormats = ['.srt', '.ass'];
-
-    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-      return res.status(400).send('Selected subtitle format is not supported.');
-    }
-
-    const resolution = quality === '480p' ? '640x480' : '1280x720';
-
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile}',scale=${resolution}" "${outputPath}"`;
-
-    executeFfmpeg(ffmpegCommand);
+  const fontMapping = {
+    'Arial-Bold': 'arialbd.ttf',
+    'Helvetica Bold': 'helvetica.ttf',
+    'Tungsten-Bold': 'tb.ttf'
   };
 
-  const processVideoWithoutLogo = () => {
-    const fontMapping = {
-      'Arial-Bold': 'arialbd.ttf',
-      'Helvetica Bold': 'helvetica.ttf',
-      'Tungsten-Bold': 'tb.ttf'
-    };
+  const selectedFontFile = fontMapping[selectedFont];
 
-    const selectedFontFile = fontMapping[selectedFont];
+  if (!selectedFontFile) {
+    return res.status(400).send('Selected font is not supported.');
+  }
 
-    if (!selectedFontFile) {
-      return res.status(400).send('Selected font is not supported.');
-    }
+  const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
 
-    const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+  // Check if the font file exists
+  if (!fs.existsSync(fullFontPath)) {
+    return res.status(400).send('Selected font file does not exist.');
+  }
 
-    // Check if the font file exists
-    if (!fs.existsSync(fullFontPath)) {
-      return res.status(400).send('Selected font file does not exist.');
-    }
+  const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+  const acceptedSubtitleFormats = ['.srt', '.ass'];
 
-    const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-    const acceptedSubtitleFormats = ['.srt', '.ass'];
+  if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+    return res.status(400).send('Selected subtitle format is not supported.');
+  }
 
-    if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-      return res.status(400).send('Selected subtitle format is not supported.');
-    }
+  const resolution = quality === '480p' ? '640x480' : '1280x720';
 
-    const resolution = quality === '480p' ? '640x480' : '1280x720';
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles='${subtitlesPath}:force_style=FontName=${selectedFont}',scale=${resolution}" "${outputPath}"`;
 
-    const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile}',scale=${resolution}" "${outputPath}"`;
+  executeFfmpeg(ffmpegCommand);
+};
 
-    executeFfmpeg(ffmpegCommand);
+const processVideoWithoutLogo = () => {
+  const fontMapping = {
+    'Arial-Bold': 'arialbd.ttf',
+    'Helvetica Bold': 'helvetica.ttf',
+    'Tungsten-Bold': 'tb.ttf'
   };
+
+  const selectedFontFile = fontMapping[selectedFont];
+
+  if (!selectedFontFile) {
+    return res.status(400).send('Selected font is not supported.');
+  }
+
+  const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+  // Check if the font file exists
+  if (!fs.existsSync(fullFontPath)) {
+    return res.status(400).send('Selected font file does not exist.');
+  }
+
+  const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+  const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+  if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+    return res.status(400).send('Selected subtitle format is not supported.');
+  }
+
+  const resolution = quality === '480p' ? '640x480' : '1280x720';
+
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles='${subtitlesPath}:force_style=FontName=${selectedFont}',scale=${resolution}" "${outputPath}"`;
+
+  executeFfmpeg(ffmpegCommand);
+};
 
   const executeFfmpeg = (command) => {
     const ffmpegProcess = exec(command);
