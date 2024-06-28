@@ -379,6 +379,11 @@ app.post('/upload', isAuthenticated, (req, res) => {
     });
   });
 
+  const convertSrtToAss = (srtFilePath, assFilePath, callback) => {
+  const ffmpegCommand = `ffmpeg -i "${srtFilePath}" "${assFilePath}"`;
+  executeFfmpeg(ffmpegCommand, callback);
+};
+  
   const processVideoWithLogo = () => {
   const fontMapping = {
     'Arial-Bold': 'arialbd.ttf',
