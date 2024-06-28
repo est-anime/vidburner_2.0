@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-adsense-account" content="ca-pub-8476094201383367">
     <title>Vidburner</title>
     <style>
         body {
@@ -11,21 +10,26 @@
             margin: 0;
             padding: 0;
             background: linear-gradient(60deg, #000 50%, #f00 50%);
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
             color: #fff;
-            overflow: hidden;
+            overflow-x: hidden;
             position: relative;
+            min-height: 100vh;
         }
 
         header {
             background-color: #000;
             color: #fff;
-            padding: 10px;
+            padding: 5px 10px;
             text-align: center;
             border-bottom: 2px solid #f00;
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
+            box-sizing: border-box;
         }
 
         header h1 {
@@ -38,7 +42,7 @@
             font-size: 24px;
             cursor: pointer;
             position: absolute;
-            left: 20px;
+            left: 10px;
         }
 
         nav {
@@ -69,10 +73,11 @@
 
         .background {
             position: relative;
-            height: calc(100vh - 60px); /* Adjusted for header and footer */
+            padding-bottom: 40px; /* Adjusted for footer height */
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-grow: 1;
         }
 
         .container {
@@ -111,21 +116,22 @@
         footer {
             background-color: #000;
             color: #fff;
-            padding: 10px;
+            padding: 5px 10px;
             text-align: center;
             border-top: 2px solid #f00;
-            position: absolute;
-            bottom: 0;
+            position: relative;
             width: 100%;
             font-weight: bold; /* Bold footer text */
+            flex-shrink: 0;
+            box-sizing: border-box;
         }
 
         /* Dropdown Menu Styles */
         .dropdown-menu {
             display: none;
             position: absolute;
-            top: 50px;
-            left: 20px;
+            top: 40px;
+            left: 10px;
             background-color: #000;
             border: 1px solid #f00;
             border-radius: 5px;
@@ -156,48 +162,56 @@
         .dropdown-menu ul li a:hover {
             background-color: #f00;
         }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="menu-icon">&#9776;</div>
-        <h1>Vidburner</h1>
-        <nav>
-            <ul>
-                <li><a href="/login">Login</a></li>
-                <li><a href="/register">Sign Up</a></li>
-                <li><a href="/contact">Contact</a></li>
-                <li><a href="/subscription">subscription</a></li>
-            </ul>
-        </nav>
-    </header>
-    <div class="background">
-        <div class="container">
-            <h2>Vidburner</h2>
-            <p>Your ultimate website for hardcoding subtiles in video with ease. <br>
-                Encode effortlessly and efficiently across all platforms. <br>
-                maximize your earnings and upgrade your experience with us..</p>
-            <div class="buttons">
-                <a href="/register">Sign In</a>
-                <a href="/burn">Let's Encode</a> <br>
-                <h2>VidBurner is a Game-Changer.</h2>
-                <p>We've designed Vidburner with hardworking creators in mind, fostering growth and success together.<br>
-                No Captcha & Adult Ads<br>
-                Advance Security Options<br>
-                Regular Encode</p>
+    <div class="content">
+        <header>
+            <div class="menu-icon">&#9776;</div>
+            <h1>Vidburner</h1>
+            <nav>
+                <ul>
+                    <li><a href="/login">login</a></li>
+                    <li><a href="/register">sign up</a></li>
+                    <li><a href="/contact">contact</a></li>
+                    <li><a href="/subscription">subscription</a></li>
+                </ul>
+            </nav>
+        </header>
+        <div class="background">
+            <div class="container">
+                <h2>Vidburner</h2>
+                <p>Your ultimate website for hardcoding subtitles in video with ease. <br>
+                    Encode effortlessly and efficiently across all platforms. <br>
+                    Maximize your earnings and upgrade your experience with us.</p>
+                <div class="buttons">
+                    <a href="/register">Sign In</a>
+                    <a href="/burn">Let's Encode</a>
+                    <br>
+                    <h2>VidBurner is a Game-Changer.</h2>
+                    <p>We've designed Vidburner with hardworking creators in mind, fostering growth and success together.<br>
+                    No Captcha & Adult Ads<br>
+                    Advanced Security Options<br>
+                    Regular Encode</p>
+                </div>
             </div>
         </div>
+        <footer>
+            <p>&copy; 2024 Vidburner. All rights reserved.</p>
+        </footer>
     </div>
-    
-    <footer>
-        <p>&copy; 2024 Vidburner. All rights reserved.</p>
-    </footer>
 
     <div class="dropdown-menu" id="dropdownMenu">
         <ul>
-            <li><a href="/login">Login</a></li>
-            <li><a href="/register">Sign Up</a></li>
-            <li><a href="/contact">Contact</a></li>
+            <li><a href="/login">login</a></li>
+            <li><a href="/register">sign up</a></li>
+            <li><a href="/contact">contact</a></li>
             <li><a href="/subscription">subscription</a></li>
         </ul>
     </div>
@@ -218,18 +232,6 @@
                 }
             }
         });
-    </script>
-
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8476094201383367" crossorigin="anonymous"></script>
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-8476094201383367"
-         data-ad-slot="8855742062"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
     </script>
 </body>
 </html>
