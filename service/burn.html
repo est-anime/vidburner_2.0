@@ -203,6 +203,12 @@
       background-color: var(--button-hover-color);
     }
 
+    #errorMessage {
+      color: red;
+      display: none;
+      margin-bottom: 15px;
+    }
+
     @media only screen and (max-width: 600px) {
       header {
         flex-direction: column;
@@ -255,6 +261,8 @@
   <div class="container">
     <h1>Upload Video and Subtitles</h1>
     <form id="uploadForm" enctype="multipart/form-data">
+      <div id="errorMessage"></div>
+      
       <label for="video">Select video (MP4 or MKV):</label>
       <input type="file" id="video" name="video" accept="video/*" required>
 
@@ -267,7 +275,7 @@
       <label for="font">Select subtitle font:</label>
       <select id="font" name="font">
         <option value="Arial-Bold">Arial Bold</option>
-     a  </select>
+      </select>
       
       <select name="quality">
         <option value="720p">720p</option>
@@ -305,9 +313,11 @@
       const progressBar = document.getElementById('progressBar');
       const downloadSection = document.getElementById('downloadSection');
       const downloadButton = document.getElementById('downloadButton');
+      const errorMessage = document.getElementById('errorMessage');
 
       form.addEventListener('submit', (e) => {
         e.preventDefault();
+        errorMessage.style.display = 'none';
         const formData = new FormData(form);
 
         const xhr = new XMLHttpRequest();
@@ -320,14 +330,23 @@
         xhr.onreadystatechange = () => {
           if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200) {
-              console.log('Upload completed!');
-              downloadSection.style.display = 'block';
-              const downloadLink = xhr.responseText;
-              downloadButton.addEventListener('click', () => {
-                window.location.href = downloadLink;
-              });
+              const response = JSON.parse(xhr.responseText);
+              if (response.success) {
+                downloadSection.style.display = 'block';
+                const downloadLink = response.downloadLink;
+                downloadButton.addEventListener('click', () => {
+                  window.location.href = downloadLink;
+                });
+              } else if (response.error === 'file_name_taken') {
+                errorMessage.textContent = 'The output file name is already taken. Please choose a different name.';
+                errorMessage.style.display = 'block';
+              } else {
+                errorMessage.textContent = 'Upload failed. Please try again.';
+                errorMessage.style.display = 'block';
+              }
             } else {
-              console.error('Upload failed!');
+              errorMessage.textContent = 'Upload failed. Please try again.';
+              errorMessage.style.display = 'block';
             }
           }
         };
