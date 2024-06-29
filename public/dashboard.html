@@ -44,17 +44,40 @@
         tbody tr:hover {
             background-color: #333;
         }
-        #adblocker-message {
+        /* Anti-Adblocker Styles */
+        .blur {
+            filter: blur(5px);
+        }
+
+        #adblocker-popup {
             display: none;
-            background: #f00;
-            color: #fff;
-            padding: 20px;
-            text-align: center;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            z-index: 1000;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            text-align: center;
+        }
+
+        #adblocker-popup .popup-content {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #adblocker-popup h2 {
+            margin: 0 0 10px 0;
+            color: #f00;
+        }
+
+        #adblocker-popup p {
+            margin: 0 0 20px 0;
         }
     </style>
 </head>
@@ -85,16 +108,6 @@
     
     <footer>
         <p>&copy; 2024 Vidburner. All rights reserved.</p>
-         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8476094201383367" crossorigin="anonymous"></script>
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-8476094201383367"
-             data-ad-slot="8855742062"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>
-            (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
     </footer>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
