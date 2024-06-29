@@ -337,8 +337,8 @@ app.post('/send-message', async (req, res) => {
     const { name, email, message } = req.body;
 
     // Telegram bot API token and chat ID (replace with your own)
-    const token = process.env.bot_token;
-    const chatId = process.env.chat_id;
+    const token = '1868302184:AAEqliGBFP7_MoU9l8VJEvokSQH5_jBJz3U';
+    const chatId = '1178645962';
 
     try {
         // Dynamically import node-fetch
