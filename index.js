@@ -13,6 +13,7 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const dotenv = require('dotenv');
 const axios = require('axios'); // For making HTTP requests
+const fetch = require('node-fetch');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -330,6 +331,45 @@ app.post('/enter-code', ensureAuthenticated, async (req, res) => {
     console.error('Error upgrading user to premium:', error);
     res.status(500).send('Server error');
   }
+});
+
+// Route to handle form submission
+app.post('/send-message', (req, res) => {
+    const { name, email, message } = req.body;
+
+    // Telegram bot API token and chat ID (replace with your own)
+    const token = process.env.bot_token;
+    const chatId = process.env.chat_id;
+
+    // Compose message text
+    const messageText = `New message from Vidburner Contact Form:\n\n`
+                        + `Name: ${name}\n`
+                        + `Email: ${email}\n`
+                        + `Message:\n${message}`;
+
+    // Send message to Telegram
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: messageText
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            res.json({ success: true });
+        } else {
+            res.json({ success: false });
+        }
+    })
+    .catch(error => {
+        console.error('Error sending message to Telegram:', error);
+        res.json({ success: false });
+    });
 });
 
 app.post('/upload', isAuthenticated, (req, res) => {
