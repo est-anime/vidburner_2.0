@@ -9,7 +9,8 @@ document.addEventListener("DOMContentLoaded", function() {
     setTimeout(function() {
         if (!adElement || adElement.offsetParent === null || adElement.offsetHeight === 0) {
             // Adblocker is enabled
-            document.getElementById('adblocker-message').style.display = 'block';
+            document.getElementById('adblocker-popup').style.display = 'flex';
+            document.body.classList.add('blur');
         } else {
             // Adblocker is not enabled
             adElement.style.display = 'none';
