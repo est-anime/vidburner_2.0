@@ -13,7 +13,6 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const dotenv = require('dotenv');
 const axios = require('axios'); // For making HTTP requests
-const fetch = require('node-fetch');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -334,42 +333,45 @@ app.post('/enter-code', ensureAuthenticated, async (req, res) => {
 });
 
 // Route to handle form submission
-app.post('/send-message', (req, res) => {
+app.post('/send-message', async (req, res) => {
     const { name, email, message } = req.body;
 
     // Telegram bot API token and chat ID (replace with your own)
     const token = 'YOUR_TELEGRAM_BOT_TOKEN';
     const chatId = 'YOUR_TELEGRAM_CHAT_ID';
 
-    // Compose message text
-    const messageText = `New message from Vidburner Contact Form:\n\n`
-                        + `Name: ${name}\n`
-                        + `Email: ${email}\n`
-                        + `Message:\n${message}`;
+    try {
+        // Dynamically import node-fetch
+        const fetch = await import('node-fetch').then(module => module.default);
 
-    // Send message to Telegram
-    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: messageText
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
+        // Compose message text
+        const messageText = `New message from Vidburner Contact Form:\n\n`
+                            + `Name: ${name}\n`
+                            + `Email: ${email}\n`
+                            + `Message:\n${message}`;
+
+        // Send message to Telegram
+        const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: messageText
+            })
+        });
+
+        const data = await response.json();
         if (data.ok) {
             res.json({ success: true });
         } else {
             res.json({ success: false });
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error sending message to Telegram:', error);
         res.json({ success: false });
-    });
+    }
 });
 
 app.post('/upload', isAuthenticated, (req, res) => {
