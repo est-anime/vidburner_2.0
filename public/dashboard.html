@@ -44,6 +44,18 @@
         tbody tr:hover {
             background-color: #333;
         }
+        #adblocker-message {
+            display: none;
+            background: #f00;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -67,8 +79,22 @@
         </table>
     </main>
 
+<div id="adblocker-message">
+        We've detected that you're using an ad blocker. Please disable it to continue using our site.
+    </div>
+    
     <footer>
         <p>&copy; 2024 Vidburner. All rights reserved.</p>
+         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8476094201383367" crossorigin="anonymous"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-8476094201383367"
+             data-ad-slot="8855742062"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
     </footer>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -106,5 +132,6 @@
         });
     </script>
     <script src="https://alwingulla.com/88/tag.min.js" data-zone="75718" async data-cfasync="false"></script>
+    <script src="path/to/anti-adblocker.js"></script>
 </body>
 </html>
