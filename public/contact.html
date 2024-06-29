@@ -6,86 +6,106 @@
     <title>Vidburner - Contact Us</title>
     <style>
         body {
-    font-family: 'Montserrat', sans-serif;
-    background: linear-gradient(60deg, #000 50%, #f00 50%);
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden;
-}
-
-a {
-    color: #f00;
-    font-size: 14px;
-    text-decoration: none;
-    margin: 15px 0;
-}
-
-.contact-container {
-    background: rgba(255, 255, 255, 0.5); /* 50% opacity */
-    border-radius: 10px;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-    width: 90%; /* Adjusted to 90% to give proper spacing */
-    max-width: 400px; /* Ensure it doesn't get too wide on large screens */
-    padding: 40px;
-    text-align: center;
-}
-
-.contact-container h1 {
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-
-.input-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.contact-container input, .contact-container textarea {
-    background: #eee;
-    border: none;
-    padding: 12px 15px;
-    margin: 8px 0;
-    width: 100%; /* Ensures the input fields take up full width of container */
-    box-sizing: border-box;
-}
-
-.contact-container button {
-    border: none;
-    padding: 10px 30px;
-    margin: 10px 0;
-    font-size: 14px;
-    cursor: pointer;
-    background: #f00;
-    color: #fff;
-    border-radius: 20px;
-    transition: transform 80ms ease-in;
-    display: inline-block;
-    text-decoration: none;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.contact-container button:active {
-    transform: scale(0.95);
-}
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(60deg, #000 50%, #f00 50%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        a {
+            color: #f00;
+            font-size: 14px;
+            text-decoration: none;
+            margin: 15px 0;
+        }
+        .contact-container {
+            background: rgba(255, 255, 255, 0.5); /* 50% opacity */
+            border-radius: 10px;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+            width: 90%; /* Adjusted to 90% to give proper spacing */
+            max-width: 400px; /* Ensure it doesn't get too wide on large screens */
+            padding: 40px;
+            text-align: center;
+        }
+        .contact-container h1 {
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .contact-container input, .contact-container textarea {
+            background: #eee;
+            border: none;
+            padding: 12px 15px;
+            margin: 8px 0;
+            width: 100%; /* Ensures the input fields take up full width of container */
+            box-sizing: border-box;
+        }
+        .contact-container button {
+            border: none;
+            padding: 10px 30px;
+            margin: 10px 0;
+            font-size: 14px;
+            cursor: pointer;
+            background: #f00;
+            color: #fff;
+            border-radius: 20px;
+            transition: transform 80ms ease-in;
+            display: inline-block;
+            text-decoration: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .contact-container button:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
     <div class="contact-container">
-        <form action="your-contact-form-handler-url-here" method="POST">
+        <form id="contactForm">
             <h1>Contact Us</h1>
             <div class="input-container">
-                <input type="text" name="name" placeholder="Your Name" required/>
-                <input type="email" name="email" placeholder="Your Email" required/>
-                <textarea name="message" placeholder="Your Message" required></textarea>
+                <input type="text" id="name" name="name" placeholder="Your Name" required/>
+                <input type="email" id="email" name="email" placeholder="Your Email" required/>
+                <textarea id="message" name="message" placeholder="Your Message" required></textarea>
                 <button type="submit">Send Message</button>
             </div>
         </form>
     </div>
+
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting
+
+            // Collect form data
+            let formData = new FormData(this);
+
+            // Send data to server
+            fetch('/send-message', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Message sent successfully. Thank you!');
+                } else {
+                    alert('Failed to send message. Please try again later.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send message. Please try again later.');
+            });
+        });
+    </script>
 </body>
 </html>
