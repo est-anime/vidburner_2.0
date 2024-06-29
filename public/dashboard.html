@@ -101,10 +101,6 @@
             </tbody>
         </table>
     </main>
-
-<div id="adblocker-message">
-        We've detected that you're using an ad blocker. Please disable it to continue using our site.
-    </div>
     
     <footer>
         <p>&copy; 2024 Vidburner. All rights reserved.</p>
@@ -119,6 +115,16 @@
             (adsbygoogle = window.adsbygoogle || []).push({});
         </script>
     </footer>
+
+<!-- Anti-Adblocker Popup -->
+    <div class="adblocker-popup" id="adblockerPopup">
+        <div class="popup-content">
+            <h2>AdBlock Detected</h2>
+            <p>Please disable AdBlock to continue using our site.</p>
+            <p>Refresh the page after disabling AdBlock.</p>
+        </div>
+    </div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             fetch('/history')
@@ -156,5 +162,29 @@
     </script>
     <script src="https://alwingulla.com/88/tag.min.js" data-zone="75718" async data-cfasync="false"></script>
     <script src="/anti-adblocker.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Check if an adblocker is enabled
+            setTimeout(function() {
+                var adblockerPopup = document.getElementById('adblockerPopup');
+                var adsElement = document.createElement('div');
+                adsElement.className = 'adsbox';
+                adsElement.style.display = 'none';
+                document.body.appendChild(adsElement);
+
+                // Check if the ads element is blocked
+                setTimeout(function() {
+                    if (!adsElement || adsElement.offsetParent === null || adsElement.offsetHeight === 0) {
+                        // Adblocker is enabled, show the adblocker popup
+                        adblockerPopup.style.display = 'flex';
+                        document.body.classList.add('blur');
+                    } else {
+                        // Adblocker is not enabled
+                        adblockerPopup.style.display = 'none';
+                    }
+                }, 100);
+            }, 100);
+        });
+    </script>
 </body>
 </html>
