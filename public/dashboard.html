@@ -162,29 +162,5 @@
     </script>
     <script src="https://alwingulla.com/88/tag.min.js" data-zone="75718" async data-cfasync="false"></script>
     <script src="/anti-adblocker.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Check if an adblocker is enabled
-            setTimeout(function() {
-                var adblockerPopup = document.getElementById('adblockerPopup');
-                var adsElement = document.createElement('div');
-                adsElement.className = 'adsbox';
-                adsElement.style.display = 'none';
-                document.body.appendChild(adsElement);
-
-                // Check if the ads element is blocked
-                setTimeout(function() {
-                    if (!adsElement || adsElement.offsetParent === null || adsElement.offsetHeight === 0) {
-                        // Adblocker is enabled, show the adblocker popup
-                        adblockerPopup.style.display = 'flex';
-                        document.body.classList.add('blur');
-                    } else {
-                        // Adblocker is not enabled
-                        adblockerPopup.style.display = 'none';
-                    }
-                }, 100);
-            }, 100);
-        });
-    </script>
 </body>
 </html>
