@@ -374,7 +374,7 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-app.post('/upload', isAuthenticated, async (req, res) => {
+app.post('/upload', isAuthenticated, (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
   }
@@ -388,217 +388,202 @@ app.post('/upload', isAuthenticated, async (req, res) => {
   const userId = req.session.user._id; // Get the user ID from the session
   const quality = req.body.quality || '720p'; // Default to 720p if not specified
 
-  try {
-    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+  // Generate unique filenames for the uploaded files
+  const uniqueId = crypto.randomBytes(16).toString('hex');
+  const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
+  const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
+  const logoPath = logoFile ? path.join(__dirname, `/uploads/logo_${uniqueId}.png`) : null;
+  const outputPath = path.join(__dirname, '/uploads', outputFileName);
 
-    if (!user) {
-      return res.status(404).send('User not found.');
+  videoFile.mv(videoPath, (err) => {
+    if (err) {
+      console.error(`Error: ${err.message}`);
+      return res.status(500).send('Error occurred while uploading the video.');
     }
 
-    if (!user.isPremium && (quality === '1080p' || quality === '1080p10bit')) {
-      return res.status(403).send('You need to be a premium user to use 1080p 10-bit encoding.');
-    }
-
-    // Generate unique filenames for the uploaded files
-    const uniqueId = crypto.randomBytes(16).toString('hex');
-    const videoPath = path.join(__dirname, `/uploads/video_${uniqueId}.mp4`);
-    const subtitlesPath = path.join(__dirname, `/uploads/subtitles_${uniqueId}.srt`);
-    const logoPath = logoFile ? path.join(__dirname, `/uploads/logo_${uniqueId}.png`) : null;
-    const outputPath = path.join(__dirname, '/uploads', outputFileName);
-
-    videoFile.mv(videoPath, (err) => {
+    subtitlesFile.mv(subtitlesPath, (err) => {
       if (err) {
         console.error(`Error: ${err.message}`);
-        return res.status(500).send('Error occurred while uploading the video.');
+        return res.status(500).send('Error occurred while uploading the subtitles.');
       }
 
-      subtitlesFile.mv(subtitlesPath, (err) => {
-        if (err) {
-          console.error(`Error: ${err.message}`);
-          return res.status(500).send('Error occurred while uploading the subtitles.');
-        }
+      if (logoFile) {
+        logoFile.mv(logoPath, (err) => {
+          if (err) {
+            console.error(`Error: ${err.message}`);
+            return res.status(500).send('Error occurred while uploading the logo.');
+          }
+          processVideoWithLogo();
+        });
+      } else {
+        processVideoWithoutLogo();
+      }
+    });
+  });
 
-        if (logoFile) {
-          logoFile.mv(logoPath, (err) => {
-            if (err) {
-              console.error(`Error: ${err.message}`);
-              return res.status(500).send('Error occurred while uploading the logo.');
-            }
-            processVideoWithLogo();
-          });
-        } else {
-          processVideoWithoutLogo();
+  const processVideoWithLogo = () => {
+  const fontMapping = {
+    'Arial-Bold': 'arialbd.ttf',
+    'Helvetica Bold': 'helvetica.ttf',
+    'Tungsten-Bold': 'tb.ttf'
+  };
+
+  const selectedFontFile = fontMapping[selectedFont];
+
+  if (!selectedFontFile) {
+    return res.status(400).send('Selected font is not supported.');
+  }
+
+  const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+  // Check if the font file exists
+  if (!fs.existsSync(fullFontPath)) {
+    return res.status(400).send('Selected font file does not exist.');
+  }
+
+  const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+  const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+  if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+    return res.status(400).send('Selected subtitle format is not supported.');
+  }
+
+  const resolution = quality === '1080p' ? '1920x1080' : quality === '480p' ? '640x480' : '1280x720';
+
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" -c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k "${outputPath}"`;
+    
+  executeFfmpeg(ffmpegCommand);
+};
+
+const processVideoWithoutLogo = () => {
+  const fontMapping = {
+    'Arial-Bold': 'arialbd.ttf',
+    'Helvetica Bold': 'helvetica.ttf',
+    'Tungsten-Bold': 'tb.ttf'
+  };
+
+  const selectedFontFile = fontMapping[selectedFont];
+
+  if (!selectedFontFile) {
+    return res.status(400).send('Selected font is not supported.');
+  }
+
+  const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+
+  // Check if the font file exists
+  if (!fs.existsSync(fullFontPath)) {
+    return res.status(400).send('Selected font file does not exist.');
+  }
+
+  const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
+  const acceptedSubtitleFormats = ['.srt', '.ass'];
+
+  if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
+    return res.status(400).send('Selected subtitle format is not supported.');
+  }
+
+  const resolution = quality === '1080p' ? '1920x1080' : quality === '480p' ? '640x480' : '1280x720';
+
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" "${outputPath}"`;
+
+  executeFfmpeg(ffmpegCommand);
+};
+
+  const executeFfmpeg = (command) => {
+    const ffmpegProcess = exec(command);
+
+    let totalFrames = 0;
+    let processedFrames = 0;
+    readline.createInterface({ input: ffmpegProcess.stderr })
+      .on('line', (line) => {
+        if (line.includes('frame=')) {
+          const match = line.match(/frame=\s*(\d+)/);
+          if (match && match[1]) {
+            processedFrames = parseInt(match[1]);
+          }
+        }
+        if (line.includes('fps=')) {
+          const match = line.match(/fps=\s*([\d.]+)/);
+          if (match && match[1]) {
+            totalFrames = parseInt(match[1]);
+          }
+        }
+        if (totalFrames > 0 && processedFrames > 0) {
+          const progressPercent = (processedFrames / totalFrames) * 100;
+          res.write(`data: ${progressPercent}\n\n`);
         }
       });
+
+    ffmpegProcess.on('error', (error) => {
+      console.error(`Error: ${error.message}`);
+      return res.status(500).send('Error occurred during video processing.');
     });
 
-    const processVideoWithLogo = () => {
-      const fontMapping = {
-        'Arial-Bold': 'arialbd.ttf',
-        'Helvetica Bold': 'helvetica.ttf',
-        'Tungsten-Bold': 'tb.ttf'
+    ffmpegProcess.on('exit', async () => {
+      res.write('data: 100\n\n');
+      res.end();
+
+      const downloadLinks = `http://${req.hostname}/uploads/${outputFileName}`;
+      const expirationTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+
+      // Insert encoding history into the database
+      const historyItem = {
+        userId: new ObjectId(userId),
+        fileName: outputFileName,
+        status: 'Completed',
+        timestamp: new Date(),
+        downloadLinks: downloadLinks,
+        linkExpiration: expirationTime
       };
 
-      const selectedFontFile = fontMapping[selectedFont];
-
-      if (!selectedFontFile) {
-        return res.status(400).send('Selected font is not supported.');
+      try {
+        await historyCollection.insertOne(historyItem);
+        console.log('Encoding history inserted successfully');
+      } catch (error) {
+        console.error('Error inserting encoding history:', error);
       }
 
-      const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
+      // Construct the download link
+      const downloadLink = `http://${req.hostname}/download/${outputFileName}`;
 
-      // Check if the font file exists
-      if (!fs.existsSync(fullFontPath)) {
-        return res.status(400).send('Selected font file does not exist.');
-      }
-
-      const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-      const acceptedSubtitleFormats = ['.srt', '.ass'];
-
-      if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-        return res.status(400).send('Selected subtitle format is not supported.');
-      }
-
-      const resolution = quality === '480p' ? '640x480' : (quality === '1080p' ? '1920x1080' : '1920x1080:pix_fmt=yuv420p10le');
-
-      const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" "${outputPath}"`;
-
-      executeFfmpeg(ffmpegCommand);
-    };
-
-    const processVideoWithoutLogo = () => {
-      const fontMapping = {
-        'Arial-Bold': 'arialbd.ttf',
-        'Helvetica Bold': 'helvetica.ttf',
-        'Tungsten-Bold': 'tb.ttf'
-      };
-
-      const selectedFontFile = fontMapping[selectedFont];
-
-      if (!selectedFontFile) {
-        return res.status(400).send('Selected font is not supported.');
-      }
-
-      const fullFontPath = path.join(__dirname, 'fonts', selectedFontFile);
-
-      // Check if the font file exists
-      if (!fs.existsSync(fullFontPath)) {
-        return res.status(400).send('Selected font file does not exist.');
-      }
-
-      const subtitlesExtension = path.extname(subtitlesFile.name).toLowerCase();
-      const acceptedSubtitleFormats = ['.srt', '.ass'];
-
-      if (!acceptedSubtitleFormats.includes(subtitlesExtension)) {
-        return res.status(400).send('Selected subtitle format is not supported.');
-      }
-
-      const resolution = quality === '480p' ? '640x480' : (quality === '1080p' ? '1920x1080' : '1920x1080:pix_fmt=yuv420p10le');
-
-      const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" "${outputPath}"`;
-
-      executeFfmpeg(ffmpegCommand);
-    };
-
-    const executeFfmpeg = (command) => {
-      const ffmpegProcess = exec(command);
-
-      let totalFrames = 0;
-      let processedFrames = 0;
-      readline.createInterface({ input: ffmpegProcess.stderr })
-        .on('line', (line) => {
-          if (line.includes('frame=')) {
-            const match = line.match(/frame=\s*(\d+)/);
-            if (match && match[1]) {
-              processedFrames = parseInt(match[1]);
-            }
-          }
-          if (line.includes('fps=')) {
-            const match = line.match(/fps=\s*([\d.]+)/);
-            if (match && match[1]) {
-              totalFrames = parseInt(match[1]);
-            }
-          }
-          if (totalFrames > 0 && processedFrames > 0) {
-            const progressPercent = (processedFrames / totalFrames) * 100;
-            res.write(`data: ${progressPercent}\n\n`);
-          }
-        });
-
-      ffmpegProcess.on('error', (error) => {
-        console.error(`Error: ${error.message}`);
-        return res.status(500).send('Error occurred during video processing.');
+      // Send an email with the download link
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.Email,
+          pass: process.env.APP_KEY,
+        },
       });
 
-      ffmpegProcess.on('exit', async () => {
-        res.write('data: 100\n\n');
-        res.end();
+      const mailOptions = {
+        from: process.env.Email,
+        to: userEmail,
+        subject: 'Video Encoding Completed',
+        text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
+      };
 
-        const downloadLinks = `http://${req.hostname}/uploads/${outputFileName}`;
-        const expirationTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
-
-        // Insert encoding history into the database
-        const historyItem = {
-          userId: new ObjectId(userId),
-          fileName: outputFileName,
-          status: 'Completed',
-          timestamp: new Date(),
-          downloadLinks: downloadLinks,
-          linkExpiration: expirationTime
-        };
-
-        try {
-          await historyCollection.insertOne(historyItem);
-          console.log('Encoding history inserted successfully');
-        } catch (error) {
-          console.error('Error inserting encoding history:', error);
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error(`Email sending error: ${error}`);
+        } else {
+          console.log(`Email sent: ${info.response}`);
         }
+      });
 
-        // Construct the download link
-        const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
-
-        // Send an email with the download link
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false, // true for 465, false for other ports
-          auth: {
-            user: process.env.Email,
-            pass: process.env.APP_KEY,
-          },
-        });
-
-        const mailOptions = {
-          from: process.env.Email,
-          to: userEmail,
-          subject: 'Video Encoding Completed',
-          text: `Your video has been successfully encoded. You can download it using the following link: ${downloadLink}`,
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error(`Email sending error: ${error}`);
+      // Delete the processed video after 24 hours
+      setTimeout(() => {
+        fs.unlink(outputPath, (err) => {
+          if (err) {
+            console.error(`Error deleting file: ${err}`);
           } else {
-            console.log(`Email sent: ${info.response}`);
+            console.log('Processed video deleted successfully after 24 hours.');
           }
         });
-
-        // Delete the processed video after 24 hours
-        setTimeout(() => {
-          fs.unlink(outputPath, (err) => {
-            if (err) {
-              console.error(`Error deleting file: ${err}`);
-            } else {
-              console.log('Processed video deleted successfully after 24 hours.');
-            }
-          });
-        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
-      });
-    };
-  } catch (error) {
-    console.error('Error processing upload:', error);
-    res.status(500).send('Server error');
-  }
+      }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+    });
+  };
 });
 
 app.listen(port, '0.0.0.0', () => {
