@@ -448,7 +448,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
     return res.status(400).send('Selected subtitle format is not supported.');
   }
 
-  const resolution = quality === '480p' ? '640x480' : '1280x720';
+  const resolution = quality === '1080p' ? '1920x1080' : quality === '480p' ? '640x480' : '1280x720';
 
   const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" "${outputPath}"`;
 
@@ -482,7 +482,7 @@ const processVideoWithoutLogo = () => {
     return res.status(400).send('Selected subtitle format is not supported.');
   }
 
-  const resolution = quality === '480p' ? '640x480' : '1280x720';
+  const resolution = quality === '1080p' ? '1920x1080' : quality === '480p' ? '640x480' : '1280x720';
 
   const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" "${outputPath}"`;
 
