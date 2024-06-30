@@ -544,7 +544,7 @@ const processVideoWithoutLogo = () => {
       }
 
       // Construct the download link
-      const downloadLink = `http://${req.hostname}/uploads/${outputFileName}`;
+      const downloadLink = `http://${req.hostname}/download/${outputFileName}`;
 
       // Send an email with the download link
       const transporter = nodemailer.createTransport({
