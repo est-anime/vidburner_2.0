@@ -448,10 +448,22 @@ app.post('/upload', isAuthenticated, (req, res) => {
     return res.status(400).send('Selected subtitle format is not supported.');
   }
 
-  const resolution = quality === '1080p' ? '1920x1080' : quality === '480p' ? '640x480' : '1280x720';
+  // Adjust resolution and depth based on user input
+  let resolution = '1280x720';
+  let depth = '';
 
-  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" -c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k "${outputPath}"`;
-    
+  if (quality === '1080p') {
+    resolution = '1920x1080';
+    depth = '-pix_fmt yuv420p10le';
+  } else if (quality === '1080p10bit') {
+    resolution = '1920x1080';
+    depth = '-pix_fmt yuv420p10le';
+  } else if (quality === '480p') {
+    resolution = '640x480';
+  }
+
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" ${depth} "${outputPath}"`;
+
   executeFfmpeg(ffmpegCommand);
 };
 
@@ -482,9 +494,21 @@ const processVideoWithoutLogo = () => {
     return res.status(400).send('Selected subtitle format is not supported.');
   }
 
-  const resolution = quality === '1080p' ? '1920x1080' : quality === '480p' ? '640x480' : '1280x720';
+  // Adjust resolution and depth based on user input
+  let resolution = '1280x720';
+  let depth = '';
 
-  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" "${outputPath}"`;
+  if (quality === '1080p') {
+    resolution = '1920x1080';
+    depth = '-pix_fmt yuv420p10le';
+  } else if (quality === '1080p10bit') {
+    resolution = '1920x1080';
+    depth = '-pix_fmt yuv420p10le';
+  } else if (quality === '480p') {
+    resolution = '640x480';
+  }
+
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" ${depth} "${outputPath}"`;
 
   executeFfmpeg(ffmpegCommand);
 };
