@@ -44,6 +44,18 @@
         tbody tr:hover {
             background-color: #333;
         }
+        #resetHistoryBtn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #b71c1c;
+            color: #e0e0e0;
+            border: none;
+            cursor: pointer;
+        }
+        #resetHistoryBtn:hover {
+            background-color: #ff4c4c;
+        }
     </style>
 </head>
 <body>
@@ -53,6 +65,7 @@
 
     <main>
         <h2 style="text-align: center;">Encoding History</h2>
+        <button id="resetHistoryBtn">Reset Encoding History</button>
         <table id="historyTable">
             <thead>
                 <tr>
@@ -103,6 +116,30 @@
                     });
                 })
                 .catch(error => console.error('Error fetching history:', error));
+        });
+
+        document.getElementById('resetHistoryBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to reset your encoding history?')) {
+                fetch('/reset-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Your encoding history has been reset.');
+                        // Clear the table or refresh the page to reflect changes
+                        document.getElementById('historyTable').querySelector('tbody').innerHTML = '';
+                    } else {
+                        alert('There was an error resetting your encoding history.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
         });
     </script>
     <script src="https://alwingulla.com/88/tag.min.js" data-zone="75718" async data-cfasync="false"></script>
