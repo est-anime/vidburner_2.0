@@ -480,8 +480,7 @@ app.post('/upload', isAuthenticated, (req, res) => {
     resolution = '640x480';
   }
 
-  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" ${depth} -c:v libx264 -crf 31 -preset medium -r 23.976 -b:v 1500k -b:a 128k "${outputPath}"`;
-
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${logoPath}" -filter_complex "[1][0]scale2ref=w=iw/5:h=ow/mdar[logo][video];[video][logo]overlay=W-w-10:10,subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1,FontSize=24',scale=${resolution}" ${depth} -c:v libx264 -crf 31 -preset medium -r 23.976 -b:v 1500k -b:a 128k "${outputPath}"`;
   executeFfmpeg(ffmpegCommand);
 };
 
@@ -526,7 +525,7 @@ const processVideoWithoutLogo = () => {
     resolution = '640x480';
   }
 
-  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1',scale=${resolution}" ${depth} "${outputPath}"`;
+  const ffmpegCommand = `ffmpeg -i "${videoPath}" -vf "subtitles=${subtitlesPath}:force_style='FontName=${selectedFontFile},Bold=1,FontSize=24',scale=${resolution}" ${depth} "${outputPath}"`;
 
   executeFfmpeg(ffmpegCommand);
 };
