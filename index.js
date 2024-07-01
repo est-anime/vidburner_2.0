@@ -374,6 +374,24 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
+app.post('/reset-history', ensureAuthenticated, async (req, res) => {
+  const userId = req.session.user._id;
+
+  try {
+    // Delete all encoding history for the authenticated user
+    const result = await historyCollection.deleteMany({ userId: new ObjectId(userId) });
+
+    if (result.deletedCount > 0) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false, message: 'No encoding history found to reset.' });
+    }
+  } catch (error) {
+    console.error('Error resetting encoding history:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 app.post('/upload', isAuthenticated, (req, res) => {
   if (!req.files || !req.files.video || !req.files.subtitles) {
     return res.status(400).send('Please upload both video and subtitles.');
